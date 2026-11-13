@@ -37,7 +37,7 @@ site/
 .DS_Store
 
 .task
-uv.run
+uv.lock
 
 schemas/collections.yaml
 schemas/core.yaml
