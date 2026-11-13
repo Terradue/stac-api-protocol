@@ -159,10 +159,12 @@ def _validate_datetime(datetime_value: str | None) -> None:
     responses={"4XX": {"model": StacException}, "5XX": {"model": StacException}},
     tags=["Core"],
 )
-def get_landing_page(service: StacApiService = Depends(get_item_service)) -> Response:
+def get_landing_page(
+    request: Request, service: StacApiService = Depends(get_item_service)
+) -> Response:
     """Return the configured service catalogue landing page."""
     try:
-        landing_page: LandingPage = service.get_landing_page()
+        landing_page: LandingPage = service.get_landing_page(request)
     except Exception as e:
         raise _server_error(f"An error occurred when looking for the Landing Page: {e}") from e
 

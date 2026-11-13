@@ -25,13 +25,15 @@ acts exclusively as the HTTP adapter**.
 ## The service port
 
 `StacApiService`, defined in `src/stac_api_protocol/stac_service.py`, is the boundary
-between the HTTP adapter and an adopter's catalogue application. It is a Python
-`typing.Protocol` that describes the operations the adapter needs.
+between the HTTP adapter and an adopter's catalogue application. It is an abstract base class with five adopter-defined catalogue operations and
+two final metadata methods. Adopters subclass it and supply a catalogue identifier,
+title, and description. Incomplete subclasses cannot be instantiated.
 
-An adopter develops a concrete specialization of this contract. Explicitly
-subclassing `StacApiService` makes that intent visible, although Python's structural
-typing also permits a class with compatible methods without inheritance. Implement
-all seven methods: inheriting protocol stubs does not provide working behavior.
+The shared landing-page method receives a FastAPI `Request` to derive public
+links. This is an HTTP coupling in the current service contract; catalogue search
+and retrieval operations remain independent of FastAPI request objects. The
+conformance method returns a fixed declaration of the four bundled STAC API
+classes, which each adopter must implement.
 
 ```text
 HTTP client
@@ -64,8 +66,9 @@ implementation at runtime through an installed Python entry point.
 | Adopter's backend integrations | Access databases, indexes, files, or remote services as required by the application. |
 | Provider factory | Construct or obtain a configured service and supply it to the HTTP adapter. |
 
-Keep FastAPI requests, responses, and dependency injection out of your catalogue
-business logic. Service methods receive ordinary filter values and return the
+Keep FastAPI responses and dependency injection out of your catalogue business
+logic. Apart from the shared landing-page method, service methods receive ordinary
+filter values and return the
 STAC objects specified by the port. If your domain uses different objects, map
 them to these types at the service boundary. The port intentionally uses PySTAC,
 GeoJSON, and package models; it is a STAC-facing contract, not a universal domain
@@ -84,7 +87,7 @@ connection lifecycle. Your provider and deployment must choose the appropriate
 resource lifetime. A simple zero-argument factory is sufficient to get started.
 
 The loader checks that there is exactly one matching entry and that it is
-callable. It does not validate the returned object's conformance to the protocol.
+callable. It does not validate the returned object's implementation of the service contract.
 Type-check and test your implementation against the service contract.
 
 See [factory registration](../how-to/register-service.md) for the exact metadata

@@ -19,7 +19,7 @@ limitations under the License.
 ## Implement the port
 
 Create a concrete implementation of `StacApiService` from
-`stac_api_protocol.stac_service`. Implement every method in the
+`stac_api_protocol.stac_service`. Implement the five abstract methods in the
 [service contract](../reference/api.md), using your own application and backend
 logic. The [tutorial](../tutorials/first-steps.md) provides a complete minimal
 example.
@@ -37,12 +37,13 @@ from .service import CatalogueService
 
 def create_service() -> StacApiService:
     """Provide the catalogue implementation used by the HTTP adapter."""
-    return CatalogueService()
+    return CatalogueService(id="catalogue", title="Catalogue", description="Catalogue data")
 ```
 
-This example assumes your `CatalogueService` has a zero-argument constructor.
+This example uses the base constructor, which requires catalogue identity metadata.
 Adapt construction to your application's configuration and resource lifecycle.
-The returned service should not require FastAPI objects to perform its operations.
+The inherited landing-page method uses the incoming request; your five catalogue
+operations receive ordinary filter values.
 
 ## Declare the entry point
 
@@ -100,4 +101,4 @@ Install Uvicorn separately as described in [Install and run](install.md).
 | `Multiple implementations found for: item_service` | Use an environment with only one matching provider registration. There is no automatic priority selection. |
 | `Dependency is not callable: item_service` | Point at a factory function or another callable, rather than a prebuilt non-callable instance. |
 | Import failure while loading the entry point | Check the module path and install your provider's runtime dependencies. Import errors propagate. |
-| Failure when a request invokes the service | Check factory construction and whether the returned service implements the full protocol. Discovery alone does not check these. |
+| Failure when a request invokes the service | Check factory construction and whether the returned service implements the service contract. Discovery alone does not check these. |

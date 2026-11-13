@@ -16,7 +16,7 @@ limitations under the License.
 
 # Build your first service
 
-This tutorial builds an empty catalogue provider. It demonstrates the complete
+This tutorial builds an empty catalogue provider. It demonstrates the five abstract operations of the
 service contract and factory discovery without requiring a database. An empty
 catalogue cannot demonstrate filtering or item retrieval; replace these methods
 with your own application logic when connecting real data.
@@ -64,24 +64,14 @@ Put this implementation in `src/my_catalogue/provider.py`:
 ```python
 from geojson import GeometryCollection
 from geojson.geometry import Geometry
-from pystac import Collection, Item, ItemCollection, Link
+from pystac import Collection, Item, ItemCollection
 
-from stac_api_protocol.models import Collections, ConformanceClasses, LandingPage
+from stac_api_protocol.models import Collections
 from stac_api_protocol.stac_service import StacApiService
 
 
 class EmptyCatalogueService(StacApiService):
     """Expose an empty catalogue to demonstrate the service boundary."""
-
-    def get_landing_page(self) -> LandingPage:
-        """Describe this demonstration catalogue."""
-        page = LandingPage("empty-catalogue", "An empty demonstration catalogue")
-        page.conforms_to = self.get_conformance_declaration().conforms_to
-        page.add_link(Link("self", "http://127.0.0.1:8000/"))
-        page.add_link(Link("data", "http://127.0.0.1:8000/collections"))
-        page.add_link(Link("conformance", "http://127.0.0.1:8000/conformance"))
-        page.add_link(Link("search", "http://127.0.0.1:8000/search"))
-        return page
 
     def get_collections(self) -> Collections:
         """Return the catalogue's empty collection listing."""
@@ -105,10 +95,6 @@ class EmptyCatalogueService(StacApiService):
         """Report that the requested item does not exist."""
         return None
 
-    def get_conformance_declaration(self) -> ConformanceClasses:
-        """Advertise no conformance claims for this demonstration."""
-        return ConformanceClasses(conformsTo=[])
-
     def get_item_search(
         self,
         bbox: list[float] | None,
@@ -124,16 +110,19 @@ class EmptyCatalogueService(StacApiService):
 
 def create_service() -> StacApiService:
     """Provide an empty catalogue service to the HTTP adapter."""
-    return EmptyCatalogueService()
+    return EmptyCatalogueService(
+        id="empty-catalogue", title="Empty catalogue", description="An empty demonstration catalogue"
+    )
 ```
 
 The class specializes `StacApiService`; the factory returns it through the port.
 Neither needs to import FastAPI. All HTTP handling remains in the adapter.
 
-The demonstration deliberately advertises no conformance classes. In a real
-provider, advertise only the specifications your complete deployment implements,
-and keep landing-page and conformance declarations consistent. Configure public
-link URLs for your deployment instead of using these local addresses.
+The base class supplies the final landing-page and conformance methods. It builds
+links from the incoming landing-page request and advertises the four bundled STAC
+API conformance classes. Adopters implement the other five abstract operations
+and must fulfill those advertised capabilities. This empty example demonstrates
+the integration mechanics; it is not a conformance certification.
 
 ## 3. Install and serve
 
