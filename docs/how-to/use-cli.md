@@ -14,12 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Use the CLI
+# Run the HTTP adapter
 
-Run the CLI entry point:
-
-```bash
-stac_api_protocol --version
-```
-
-Add project-specific commands here as the command surface evolves.
+This package exposes an ASGI application, not a command-line interface. Follow
+[Install and run](install.md) to launch `stac_api_protocol.main:app` with Uvicorn,
+and [register a service factory](register-service.md) before starting the server.

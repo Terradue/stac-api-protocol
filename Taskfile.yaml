@@ -124,7 +124,7 @@ tasks:
       - task: openapi:generate_docs
         vars:
           API: './schemas/openapi.yaml'
-          OUTPUT: './docs/opneapi.html'
+          OUTPUT: './docs/reference/opneapi.html'
 
   generate_fastapi_skeleton:
     cmds:

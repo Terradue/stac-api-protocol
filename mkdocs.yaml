@@ -14,8 +14,8 @@
 
 site_name: STAC API Protocol
 site_description: A Python FastAPI HTTP adapter for STAC API Core, Item Search, Features and Collections.
-site_url: 
-repo_url: 
+site_url: https://terradue.github.io/stac-api-protocol/
+repo_url: https://github.com/Terradue/stac-api-protocol
 repo_name: stac-api-protocol
 edit_uri: edit/main/docs/
 
@@ -26,14 +26,14 @@ nav:
   - Home: index.md
   - Tutorials:
       - Overview: tutorials/index.md
-      - First steps: tutorials/first-steps.md
+      - Build your first service: tutorials/first-steps.md
   - How-to guides:
       - Overview: how-to/index.md
-      - Install: how-to/install.md
-      - Use the CLI: how-to/use-cli.md
+      - Install and run: how-to/install.md
+      - Register a service factory: how-to/register-service.md
   - Reference:
       - Overview: reference/index.md
-      - API: reference/api.md
+      - Service contract: reference/api.md
   - Explanation:
       - Overview: explanation/index.md
       - Architecture: explanation/architecture.md

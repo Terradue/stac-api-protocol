@@ -1,5 +1,5 @@
 <!--
-Copyright {{ copyright_year }} Terradue
+Copyright 2026 Terradue
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +16,5 @@ limitations under the License.
 
 # Tutorials
 
-Tutorials are learning-oriented lessons. They should guide a new user through a complete, successful path without assuming prior project knowledge.
-
-Start with [First steps](first-steps.md).
+[Build your first service](first-steps.md) walks through implementing the port,
+registering its factory, and serving an empty catalogue through FastAPI.

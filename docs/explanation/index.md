@@ -1,5 +1,5 @@
 <!--
-Copyright {{ copyright_year }} Terradue
+Copyright 2026 Terradue
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,8 +16,5 @@ limitations under the License.
 
 # Explanation
 
-Explanation documentation is understanding-oriented. It should describe background, trade-offs, and rationale.
-
-Available explanation pages:
-
-- [Architecture](architecture.md)
+Read [Architecture: Ports and Adapters](architecture.md) to understand why FastAPI
+is exclusively the HTTP adapter and how your service supplies application behavior.

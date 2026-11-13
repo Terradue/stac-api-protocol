@@ -16,18 +16,40 @@ limitations under the License.
 
 # STAC API Protocol
 
-A Python FastAPI HTTP adapter for STAC API Core, Item Search, Features and Collections.
+STAC API Protocol provides the HTTP layer for STAC API Core, Collections,
+Features, and Item Search. It is developed according to **Hexagonal Architecture
+(Ports and Adapters)** and the separation of concerns associated with **Clean
+Architecture**: **FastAPI acts exclusively as the HTTP adapter**.
 
-Use these docs by intent:
+Adopters provide the application behavior by implementing `StacApiService`, the
+service port defined in `src/stac_api_protocol/stac_service.py`. Your service
+connects catalogue operations to your domain logic, storage, and search systems.
+This package supplies the routes, request validation, response serialization,
+and HTTP error handling.
 
-- [Tutorials](tutorials/): learn by completing a guided path.
-- [How-to guides](how-to/): solve specific tasks.
-- [Reference](reference/): look up commands, APIs, and configuration.
-- [Explanation](explanation/): understand design decisions and concepts.
+## Integration at a glance
 
-## Quick start
+1. Implement all operations of `StacApiService` in your own Python package.
+2. Expose a callable factory that returns your service implementation.
+3. Register that factory in your package's `pyproject.toml`:
 
-```bash
-pip install stac-api-protocol
-stac_api_protocol --version
-```
+   ```toml
+   [project.entry-points."stacapi.service"]
+   item_service = "my_catalogue.provider:create_service"
+   ```
+
+4. Install your package alongside `stac-api-protocol`, then serve
+   `stac_api_protocol.main:app` with an ASGI server.
+
+The entry-point group **`stacapi.service`** and entry name **`item_service`** are
+required. The module and factory names on the right-hand side are yours to choose.
+Exactly one installed provider must match. Installing this HTTP adapter alone
+does not supply a catalogue backend.
+
+## Documentation
+
+- [First service tutorial](tutorials/first-steps.md): build and run a minimal provider.
+- [Register a service factory](how-to/register-service.md): configure discovery and troubleshoot startup.
+- [Install and run](how-to/install.md): prepare the runtime environment.
+- [Service contract](reference/api.md): methods, return values, and HTTP behavior.
+- [Architecture](explanation/architecture.md): understand the adapter boundary and dependency direction.

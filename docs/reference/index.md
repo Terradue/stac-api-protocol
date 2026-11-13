@@ -1,5 +1,5 @@
 <!--
-Copyright {{ copyright_year }} Terradue
+Copyright 2026 Terradue
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,8 +16,5 @@ limitations under the License.
 
 # Reference
 
-Reference documentation is information-oriented. It should be precise, complete, and easy to scan.
-
-Available reference pages:
-
-- [API](api.md)
+[Service contract](api.md) documents the `StacApiService` operations, their HTTP
+routes, result semantics, and provider discovery.
