@@ -15,9 +15,130 @@
 version: '3'
 
 includes:
+  json: https://raw.githubusercontent.com/Terradue/taskfile-utils/refs/heads/main/json.yaml
+  openapi: https://raw.githubusercontent.com/Terradue/taskfile-utils/refs/heads/main/openapi.yaml
   quality: https://raw.githubusercontent.com/Terradue/taskfile-utils/refs/heads/main/quality.yaml
 
+vars:
+  STAC_VERSION: v1.0.0
+  STAC_BASE_URL: https://api.stacspec.org/{{.STAC_VERSION}}
+  STAC_SPECS:
+    - core
+    - item-search
+    - collections
+    - ogcapi-features
+
 tasks:
+  fetch:
+    internal: true
+    status:
+      - '! [ -f ./schemas/{{.SPEC}}.yaml ]'
+    cmds:
+      - >-
+        curl --fail --location --show-error
+        "{{.STAC_BASE_URL}}/{{.SPEC}}/openapi.yaml"
+        --output "./schemas/{{.SPEC}}.yaml"
+
+  fetch_all:
+    internal: true
+    cmds:
+      - mkdir -p ./schemas
+      - for:
+          var: STAC_SPECS
+        task: fetch
+        vars:
+          SPEC: '{{.ITEM}}'
+
+  bootstrap:
+    deps:
+      - fetch_all
+    cmds:
+      - |
+        yq -i '
+          .components.parameters.bbox = {
+            "$ref": "./ogcapi-features.yaml#/components/parameters/bbox"
+          } |
+          .components.parameters.limit = {
+            "$ref": "./ogcapi-features.yaml#/components/parameters/limit"
+          }
+        ' ./schemas/item-search.yaml
+      - |
+        cat > ./schemas/openapi.referenced.yaml <<'YAML'
+        openapi: 3.1.0
+
+        info:
+          title: STAC API - Bundle
+          version: 1.0.0
+          description: Bundled version of STAC API Core, Item Search, Features and Collections 
+          contact:
+            name: STAC Specification
+            url: http://stacspec.org
+          license:
+            name: Apache License 2.0
+            url: https://www.apache.org/licenses/LICENSE-2.0
+
+        servers:
+        - description: 'Example Server 1'
+          url: https://terradue.com/stacapi
+
+        security:
+        - BearerToken: []
+
+        paths:
+          /:
+            $ref: './core.yaml#/paths/~1'
+
+          /conformance:
+            $ref: './ogcapi-features.yaml#/paths/~1conformance'
+
+          /collections:
+            $ref: './collections.yaml#/paths/~1collections'
+
+          /collections/{collectionId}:
+            $ref: './collections.yaml#/paths/~1collections~1{collectionId}'
+
+          /collections/{collectionId}/items:
+            $ref: './ogcapi-features.yaml#/paths/~1collections~1{collectionId}~1items'
+
+          /collections/{collectionId}/items/{featureId}:
+            $ref: './ogcapi-features.yaml#/paths/~1collections~1{collectionId}~1items~1{featureId}'
+
+          /search:
+            $ref: './item-search.yaml#/paths/~1search'
+
+        components:
+          securitySchemes:
+            BearerToken:
+              description: Bearer Token authentication
+              type: apiKey
+              name: Authorization
+              in: header
+        YAML
+      - task: openapi:bundle
+        vars:
+          API: './schemas/openapi.referenced.yaml'
+          OUTPUT: './schemas/openapi.yaml'
+
+  generate_openapi_doc:
+    cmds:
+      - task: openapi:generate_docs
+        vars:
+          API: './schemas/openapi.yaml'
+          OUTPUT: './docs/opneapi.html'
+
+  generate_fastapi_skeleton:
+    cmds:
+      - task: openapi:generate_fastapi
+        vars:
+          API: './schemas/openapi.yaml'
+          OUTPUT: './src/stac_api_protocol'
+      - rm -rf src/stac_api_protocol/models.py
+      - task: json:create_models # the datamodel-codegen is not sully configured in the datamodel-code-generator
+        vars:
+          INPUT_FILE_TYPE: 'openapi'
+          SCHEMA: './schemas/openapi.yaml'
+          OUTPUT: 'src/stac_api_protocol/models.py'
+      - hatch run dev:fix
 
   default:
     cmds:

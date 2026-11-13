@@ -38,3 +38,9 @@ site/
 
 .task
 uv.run
+
+schemas/collections.yaml
+schemas/core.yaml
+schemas/item-search.yaml
+schemas/ogcapi-features.yaml
+schemas/openapi.referenced.yaml

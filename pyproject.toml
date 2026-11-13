@@ -40,7 +40,11 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = []
+dependencies = [
+  "geojson==3.3.0",
+  "pystac>=1.14,<2",
+  "fastapi>=0.162.4",
+]
 
 # ---------------------------------------------------------------------------
 # Project Refs
