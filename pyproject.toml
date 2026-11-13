@@ -150,6 +150,7 @@ xfail_strict = true
 skip-install = false
 dependencies = [
   "mypy==2.4.1",
+  "types-geojson==3.3.0.20261006",
   "ruff==0.17.4",
   "bandit==1.9.4",
   "pytest==9.2.0",
@@ -211,6 +212,11 @@ ignore = [
   # "PLR0904", # too many public methods
 ]
 
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI consumes these defaults as declaration metadata, not per-request state.
+# Preserve generated route signatures while retaining B008 for other calls.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
+
 [tool.ruff.lint.per-file-ignores]
 # OpenAPI-generated signatures and HTTP status literals mirror the API schema.
 "src/stac_api_protocol/**/*.py" = ["PLR0913", "PLR2004"]
@@ -249,13 +255,6 @@ files = [
   "src/stac_api_protocol",
   "tests"
 ]
-
-# These upstream modules do not provide typing metadata in this installation.
-# Keep the gateway strict while excluding these dependency implementations.
-[[tool.mypy.overrides]]
-module = []
-ignore_missing_imports = true
-follow_imports = "skip"
 
 [tool.hatch.envs.dev.scripts]
 # ---------------------------------------------------------------------------

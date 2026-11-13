@@ -333,7 +333,8 @@ def _parse_intersects(value: str | None) -> GeometryGeoJSON | GeometryCollection
     if value is None:
         return None
     try:
-        geometry = loads(value)
+        # JSON null decodes to None, although the GeoJSON stubs omit that return type.
+        geometry: object = loads(value)
         if geometry is None:
             return None
         if not isinstance(geometry, (GeometryGeoJSON, GeometryCollection)) or not geometry.is_valid:
