@@ -192,6 +192,7 @@ class GeoParquetService(StacApiService):
     def _query(self, filters: list[ast.Node], limit: int) -> ItemCollection:
         """Query using a fresh connection so concurrent requests share no cursor."""
         with duckdb.connect(config={"threads": 1}) as connection:
+            connection.execute("INSTALL spatial")
             connection.load_extension("spatial")
             connection.execute("SET TimeZone = 'UTC'")
             records = connection.read_parquet(str(self._parquet))
