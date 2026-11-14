@@ -29,7 +29,7 @@ and HTTP error handling.
 
 ## Integration at a glance
 
-1. Implement all operations of `StacApiService` in your own Python package.
+1. Subclass `StacApiService` and implement its five abstract catalogue operations.
 2. Expose a callable factory that returns your service implementation.
 3. Register that factory in your package's `pyproject.toml`:
 

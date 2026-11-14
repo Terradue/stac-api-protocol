@@ -12,53 +12,98 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Define catalogue operations and shared landing-page metadata for service providers."""
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, final
+
+from pystac import Link
+
+from .models import ConformanceClasses, LandingPage
 
 if TYPE_CHECKING:
+    from fastapi import Request
     from geojson import GeometryCollection
     from geojson.geometry import Geometry as GeometryGeoJSON
     from pystac import Collection, Item, ItemCollection
 
-    from .models import Collections, ConformanceClasses, LandingPage
+    from .models import Collections
 
 
-class StacApiService(Protocol):
-    def get_landing_page(self) -> LandingPage:
+class StacApiService(ABC):
+    """Provide shared metadata and require adopter-defined catalogue operations.
+
+    Attributes:
+        id: Stable catalogue identifier.
+        title: Human-readable catalogue title.
+        description: Description of the catalogue's contents.
+    """
+
+    def __init__(self, id: str, title: str, description: str) -> None:
+        """Configure the identity used in the catalogue landing page."""
+        self.id = id
+        self.title = title
+        self.description = description
+
+    @final
+    def get_landing_page(self, request: Request) -> LandingPage:
+        """Build metadata and links for the requested catalogue root.
+
+        Args:
+            request: Landing-page request whose URL supplies the public catalogue
+                root, including any deployment prefix. Query strings are excluded.
         """
-        landing page
-        """
-        ...
+        landing_page = LandingPage(
+            id=self.id,
+            title=self.title,
+            description=self.description,
+        )
 
+        base_url = str(request.url.replace(query="", fragment="")).rstrip("/")
+        landing_page.add_link(Link("self", f"{base_url}/"))
+        landing_page.add_link(Link("data", f"{base_url}/collections"))
+        landing_page.add_link(Link("conformance", f"{base_url}/conformance"))
+        landing_page.add_link(Link("search", f"{base_url}/search"))
+
+        landing_page.conforms_to = self.get_conformance_declaration().conforms_to
+        return landing_page
+
+    @abstractmethod
     def get_collections(self) -> Collections:
-        """
-        the feature collections in the dataset
-        """
-        ...
+        """Return the catalogue's collection listing and navigation links."""
 
+    @abstractmethod
     def describe_collection(self, collection_id: str) -> Collection | None:
-        """
-        describe the feature collection with id `collectionId`
-        """
-        ...
+        """Return collection metadata, or None if the collection does not exist."""
 
+    @abstractmethod
     def get_features(
         self, collection_id: str, limit: int | None, bbox: list[float] | None, datetime: str | None
-    ) -> ItemCollection | None: ...
+    ) -> ItemCollection | None:
+        """Return matching items, an empty result, or None for an unavailable resource."""
 
+    @abstractmethod
     def get_feature(self, collection_id: str, feature_id: str) -> Item | None:
-        """
-        fetch a single feature
-        """
-        ...
+        """Return an item, or None if it does not exist in the collection."""
 
+    @final
     def get_conformance_declaration(self) -> ConformanceClasses:
-        """
-        information about specifications that this API conforms to
-        """
-        ...
+        """Return a fresh declaration of the four supported STAC API classes.
 
+        Adopter implementations must fulfill these advertised capabilities.
+        """
+        return ConformanceClasses(
+            conforms_to=[
+                "https://api.stacspec.org/v1.0.0/core",
+                "https://api.stacspec.org/v1.0.0/item-search",
+                "https://api.stacspec.org/v1.0.0/collections",
+                "https://api.stacspec.org/v1.0.0/ogcapi-features",
+            ]
+        )
+
+    @abstractmethod
     def get_item_search(
         self,
         bbox: list[float] | None,
@@ -67,4 +112,5 @@ class StacApiService(Protocol):
         limit: int | None,
         ids: list[str] | None,
         collections: list[str] | None,
-    ) -> ItemCollection | None: ...
+    ) -> ItemCollection | None:
+        """Return matching items, an empty result, or None for an unavailable resource."""

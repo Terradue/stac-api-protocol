@@ -16,16 +16,22 @@ limitations under the License.
 
 # Service contract
 
-Adopters implement `StacApiService`, defined in
+Adopters subclass `StacApiService`, defined in
 `src/stac_api_protocol/stac_service.py`. The HTTP adapter invokes its synchronous
 methods with parsed filter values. All seven operations belong to the same
 registered `item_service` provider.
+
+The constructor requires `id`, `title`, and `description`. Five catalogue operations
+are abstract. `get_landing_page(request)` and `get_conformance_declaration()` are
+final concrete methods and must not be overridden. The landing page derives its
+links from the request URL without query parameters. Both responses advertise the
+four bundled STAC API classes: Core, Item Search, Collections, and OGC API Features.
 
 ## Operations and routes
 
 | HTTP route | Service method | Return type |
 | --- | --- | --- |
-| `GET /` | `get_landing_page()` | `LandingPage` |
+| `GET /` | `get_landing_page(request)` | `LandingPage` |
 | `GET /collections` | `get_collections()` | `Collections` |
 | `GET /collections/{collectionId}` | `describe_collection(collection_id)` | `pystac.Collection` or `None` |
 | `GET /collections/{collectionId}/items` | `get_features(collection_id, limit, bbox, datetime)` | `pystac.ItemCollection` or `None` |
@@ -56,8 +62,8 @@ parallel representations of the HTTP contract.
   `None` from an item-list or search operation causes an HTTP 404 response.
 - Return `None` for a missing collection or individual item. The adapter maps it
   to HTTP 404.
-- Set `LandingPage.conforms_to` explicitly. Its serializer adds `conformsTo` to
-  the catalogue JSON. `ConformanceClasses` exposes `conforms_to` in Python and
+- The base class sets `LandingPage.conforms_to` from its conformance declaration.
+  Its serializer adds `conformsTo` to the catalogue JSON. `ConformanceClasses` exposes `conforms_to` in Python and
   the `conformsTo` alias in JSON.
 - `Collections` wraps PySTAC collections and links and serializes them to JSON.
 
@@ -78,7 +84,7 @@ HTTP error bodies use the package's STAC exception model with `code` and
 resources through the optional return values above; they do not need to construct
 FastAPI responses or raise FastAPI exceptions.
 
-## Python protocol
+## Python service base class
 
 ::: stac_api_protocol.stac_service.StacApiService
 
