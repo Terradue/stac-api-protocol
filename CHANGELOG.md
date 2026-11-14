@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+## [0.1.1] - 2026-11-14
 
 ### Changed
 
@@ -33,9 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-### Security
+- `bbox` not accepted as 4 or 6 CVS (encoded) HTTP query string parameter
 
-### Added
+### Security
 
 ## [0.1.0] - 2026-01-01
 
@@ -43,5 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial project release.
 
-[Unreleased]: https://github.com/Terradue/stac-api-protocol/compare/0.1.0...HEAD
+[Unreleased]: https://github.com/Terradue/stac-api-protocol/compare/0.1.1...HEAD
+[0.1.1]: https://github.com/Terradue/stac-api-protocol/compare/0.1.0...0.1.1
 [0.1.0]: https://github.com/Terradue/stac-api-protocol/releases/tag/0.1.0
