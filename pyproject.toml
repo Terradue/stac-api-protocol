@@ -68,6 +68,7 @@ include = [
   "/src",
   "/tests",
   "/docs",
+  "/demo",
   "/README.md",
   "/CHANGELOG.md",
   "/LICENSE",
@@ -116,7 +117,11 @@ skip-install = false
 dependencies = [
   "pytest==9.2.0",
   "pytest-cov==7.1.0",
+  "stac-api-protocol-demo @ {root:uri}/demo",
 ]
+
+[tool.hatch.envs.test.env-vars]
+PYTHONPATH = "{root}/demo"
 
 [tool.hatch.envs.test.scripts]
 test = "pytest {args:tests}"
@@ -149,12 +154,16 @@ xfail_strict = true
 [tool.hatch.envs.dev]
 skip-install = false
 dependencies = [
+  "stac-api-protocol-demo @ {root:uri}/demo",
   "mypy==2.4.1",
   "types-geojson==3.3.0.20261006",
   "ruff==0.17.4",
   "bandit==1.9.4",
   "pytest==9.2.0",
 ]
+
+[tool.hatch.envs.dev.env-vars]
+PYTHONPATH = "{root}/demo"
 
 # ---------------------------------------------------------------------------
 # Ruff
@@ -220,6 +229,8 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
 [tool.ruff.lint.per-file-ignores]
 # OpenAPI-generated signatures and HTTP status literals mirror the API schema.
 "src/stac_api_protocol/**/*.py" = ["PLR0913", "PLR2004"]
+# Implementations must preserve the protocol's search method signature.
+"demo/stac_api_demo/service.py" = ["PLR0913"]
 
 [tool.ruff.lint.mccabe]
 # Flag errors (C901) whenever complexity exceeds 10 (default is 10)
@@ -240,6 +251,8 @@ max-statements = 40
 
 # Strict typing is the default for new Terradue Python projects.
 strict = true
+# Attribute's constructor is unannotated upstream; its input is a field name.
+untyped_calls_exclude = ["pygeofilter.ast.Attribute"]
 
 # Improve diagnostics.
 pretty = true
@@ -253,8 +266,14 @@ ignore_missing_imports = false
 # Files checked by default.
 files = [
   "src/stac_api_protocol",
-  "tests"
+  "tests",
+  "demo/stac_api_demo"
 ]
+
+# These dependencies ship annotations but do not declare a py.typed marker.
+[[tool.mypy.overrides]]
+module = ["pygeofilter.*", "pygeofilter_duckdb.*"]
+follow_untyped_imports = true
 
 [tool.hatch.envs.dev.scripts]
 # ---------------------------------------------------------------------------
@@ -263,11 +282,11 @@ files = [
 # These commands are allowed to modify files.
 # ---------------------------------------------------------------------------
 
-format = "ruff format {args:src tests}"
+format = "ruff format {args:src tests demo/stac_api_demo}"
 
 fix = [
-  "ruff check --fix {args:src tests}",
-  "ruff format {args:src tests}",
+  "ruff check --fix {args:src tests demo/stac_api_demo}",
+  "ruff format {args:src tests demo/stac_api_demo}",
 ]
 
 # ---------------------------------------------------------------------------
@@ -276,30 +295,30 @@ fix = [
 # These commands MUST NOT modify files and are suitable for CI.
 # ---------------------------------------------------------------------------
 
-format-check = "ruff format --check {args:src tests}"
+format-check = "ruff format --check {args:src tests demo/stac_api_demo}"
 
-lint = "ruff check {args:src tests}"
-lint-check = "ruff check {args:src tests}"
-design-check = "ruff check --select C90,PLR {args:src tests}"
+lint = "ruff check {args:src tests demo/stac_api_demo}"
+lint-check = "ruff check {args:src tests demo/stac_api_demo}"
+design-check = "ruff check --select C90,PLR {args:src tests demo/stac_api_demo}"
 
-typecheck = "mypy {args:src tests}"
+typecheck = "mypy {args:src tests demo/stac_api_demo}"
 
-security = "bandit -r {args:src}"
+security = "bandit -r {args:src demo/stac_api_demo}"
 
 # Run the complete static quality gate.
 quality = [
-  "ruff format --check {args:src tests}",
-  "ruff check {args:src tests}",
-  "mypy {args:src tests}",
-  "bandit -r {args:src}",
+  "ruff format --check {args:src tests demo/stac_api_demo}",
+  "ruff check {args:src tests demo/stac_api_demo}",
+  "mypy {args:src tests demo/stac_api_demo}",
+  "bandit -r {args:src demo/stac_api_demo}",
 ]
 
 # Complete local/CI validation including tests.
 check = [
-  "ruff format --check {args:src tests}",
-  "ruff check {args:src tests}",
-  "mypy {args:src tests}",
-  "bandit -r {args:src}",
+  "ruff format --check {args:src tests demo/stac_api_demo}",
+  "ruff check {args:src tests demo/stac_api_demo}",
+  "mypy {args:src tests demo/stac_api_demo}",
+  "bandit -r {args:src demo/stac_api_demo}",
   "pytest {args:tests}",
 ]
 

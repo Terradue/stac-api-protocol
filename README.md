@@ -62,3 +62,8 @@ task quality:pre-commit:run
 ## License
 
 [![Apache License, Version 2.0](https://img.shields.io/badge/license-Apache%20License%202.0-blue)](https://www.apache.org/licenses/LICENSE-2.0)
+
+## GeoParquet demo
+
+See [demo/README.md](demo/README.md) for a runnable NAIP-backed `StacApiService`,
+Uvicorn launch command, and curl/jq examples for every API operation.
