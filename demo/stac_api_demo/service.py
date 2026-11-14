@@ -121,7 +121,7 @@ class GeoParquetService(StacApiService):
         super().__init__("naip-demo", "NAIP GeoParquet demo", "NAIP imagery queried with DuckDB")
         self._parquet = data_dir / "naip.parquet"
         if not self._parquet.is_file():
-            raise FileNotFoundError(f"Missing {self._parquet}; run bash demo/download-data.sh")
+            raise FileNotFoundError(f"Missing {self._parquet}; run bash download-data.sh")
         self._collections = {
             collection.id: collection
             for collection in (
@@ -227,4 +227,4 @@ class GeoParquetService(StacApiService):
 @cache
 def get_service() -> GeoParquetService:
     """Load the demo service once, using STAC_DEMO_DATA_DIR or demo/data."""
-    return GeoParquetService(Path(os.environ.get("STAC_DEMO_DATA_DIR", "demo/data")))
+    return GeoParquetService(Path(os.environ.get("STAC_DEMO_DATA_DIR", "./data")))

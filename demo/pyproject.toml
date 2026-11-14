@@ -24,15 +24,13 @@ requires-python = ">=3.11"
 dependencies = [
   "stac-api-protocol",
   "duckdb>=1.5,<2",
+  "duckdb-extension-spatial>=1.5,<2",
   "pygeofilter-duckdb==0.2.0",
   "uvicorn>=0.54,<1",
 ]
 
 [project.entry-points."stacapi.service"]
 item_service = "stac_api_demo.service:get_service"
-
-[project.scripts]
-stac-api-demo = "stac_api_demo:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["stac_api_demo"]
