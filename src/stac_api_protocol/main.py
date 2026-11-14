@@ -19,6 +19,7 @@
 """Expose STAC routes backed by the configured service provider."""
 
 import logging
+import math
 import re
 from datetime import datetime as DateTime
 from typing import TYPE_CHECKING, Annotated
@@ -28,6 +29,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from geojson import GeometryCollection, loads
 from geojson.geometry import Geometry as GeometryGeoJSON
+from pydantic import AfterValidator, BeforeValidator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 if TYPE_CHECKING:
@@ -215,6 +217,31 @@ def describe_collection(
     raise _not_found(f"Collection {collection_id} does not exist in this Catalogue")
 
 
+def _split_bbox_coordinates(value: object) -> object:
+    """Expand comma-separated query values while retaining repeated parameters."""
+    if not isinstance(value, list):
+        return value
+    return [
+        coordinate
+        for entry in value
+        for coordinate in (entry.split(",") if isinstance(entry, str) else [entry])
+    ]
+
+
+def _validate_bbox_coordinates(bbox: list[float] | None) -> list[float] | None:
+    """Require four or six finite coordinates for a query bounding box.
+
+    Raises:
+        ValueError: If the bounding box has an invalid size or non-finite values.
+    """
+    if bbox is not None:
+        if len(bbox) not in (4, 6):
+            raise ValueError("Bounding box must contain four or six coordinates")
+        if not all(math.isfinite(coordinate) for coordinate in bbox):
+            raise ValueError("Bounding box coordinates must be finite")
+    return bbox
+
+
 @app.get(
     "/collections/{collectionId}/items",
     responses={"4XX": {"model": StacException}, "5XX": {"model": StacException}},
@@ -223,7 +250,12 @@ def describe_collection(
 def get_features(
     collection_id: str = Path(..., alias="collectionId"),
     limit: Annotated[int | None, Query(ge=1, le=10000)] = 10,
-    bbox: list[float] | None = Query(None),
+    bbox: Annotated[
+        list[float] | None,
+        BeforeValidator(_split_bbox_coordinates),
+        AfterValidator(_validate_bbox_coordinates),
+        Query(min_length=4, max_length=6),
+    ] = None,
     datetime: str | None = None,
     service: StacApiService = Depends(get_item_service),
 ) -> Response:
@@ -354,7 +386,12 @@ def _parse_intersects(value: str | None) -> GeometryGeoJSON | GeometryCollection
     tags=["Item Search"],
 )
 def get_item_search(
-    bbox: list[float] | None = Query(None, min_length=4, max_length=6),
+    bbox: Annotated[
+        list[float] | None,
+        BeforeValidator(_split_bbox_coordinates),
+        AfterValidator(_validate_bbox_coordinates),
+        Query(min_length=4, max_length=6),
+    ] = None,
     intersects: str | None = None,
     datetime: str | None = None,
     limit: Annotated[int | None, Query(ge=1, le=10000)] = 10,
