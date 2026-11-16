@@ -42,7 +42,7 @@ classifiers = [
 ]
 dependencies = [
   "geojson==3.3.0",
-  "pystac>=1.14,<2",
+  "pystac>=1.16.0,<2",
   "fastapi>=0.162.4",
 ]
 
