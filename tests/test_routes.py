@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 @pytest.mark.parametrize(
     ("route", "arguments"),
     [
-        ("get_landing_page", (Request({"type": "http"}),)),
+        ("get_landing_page", ()),
         ("describe_collection", ("sentinel",)),
         ("get_feature", ("sentinel", "scene")),
         ("get_features", ("sentinel", 20, [1.0, 2.0, 3.0, 4.0], None)),
@@ -65,7 +65,7 @@ def test_routes_return_service_models(api: ModuleType, service: Mock, route: str
 @pytest.mark.parametrize(
     ("route", "arguments"),
     [
-        ("get_landing_page", (Request({"type": "http"}),)),
+        ("get_landing_page", ()),
         ("describe_collection", ("sentinel",)),
         ("get_feature", ("sentinel", "scene")),
         ("get_features", ("sentinel", 10, None, None)),
@@ -85,7 +85,7 @@ def test_missing_results_raise_not_found(
 @pytest.mark.parametrize(
     ("route", "arguments"),
     [
-        ("get_landing_page", (Request({"type": "http"}),)),
+        ("get_landing_page", ()),
         ("get_collections", ()),
         ("get_conformance_declaration", ()),
         ("describe_collection", ("sentinel",)),

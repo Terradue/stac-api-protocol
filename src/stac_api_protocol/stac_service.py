@@ -24,7 +24,6 @@ from pystac import Link
 from .models import ConformanceClasses, LandingPage
 
 if TYPE_CHECKING:
-    from fastapi import Request
     from geojson import GeometryCollection
     from geojson.geometry import Geometry as GeometryGeoJSON
     from pystac import Collection, Item, ItemCollection
@@ -48,7 +47,7 @@ class StacApiService(ABC):
         self.description = description
 
     @final
-    def get_landing_page(self, request: Request) -> LandingPage:
+    def get_landing_page(self) -> LandingPage:
         """Build metadata and links for the requested catalogue root.
 
         Args:
@@ -61,11 +60,10 @@ class StacApiService(ABC):
             description=self.description,
         )
 
-        base_url = str(request.url.replace(query="", fragment="")).rstrip("/")
-        landing_page.add_link(Link("self", f"{base_url}/"))
-        landing_page.add_link(Link("data", f"{base_url}/collections"))
-        landing_page.add_link(Link("conformance", f"{base_url}/conformance"))
-        landing_page.add_link(Link("search", f"{base_url}/search"))
+        landing_page.add_link(Link("self", "/"))
+        landing_page.add_link(Link("data", "/collections"))
+        landing_page.add_link(Link("conformance", "/conformance"))
+        landing_page.add_link(Link("search", "/search"))
 
         landing_page.conforms_to = self.get_conformance_declaration().conforms_to
         return landing_page

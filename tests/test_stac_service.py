@@ -16,8 +16,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-from fastapi import Request
 from pystac import ItemCollection
 
 from stac_api_protocol.models import Collections
@@ -53,31 +51,19 @@ class EmptyCatalogueService(StacApiService):
         return ItemCollection([])
 
 
-@pytest.mark.parametrize("path", ["/", "/stac/", "/stac"])
-def test_landing_page_uses_request_root_without_query_string(path: str) -> None:
+def test_landing_page_uses_root_relative_links() -> None:
     service = EmptyCatalogueService(id="catalogue", title="Example", description="Example data")
-    request = Request(
-        {
-            "type": "http",
-            "scheme": "https",
-            "server": ("example.org", 8443),
-            "path": path,
-            "query_string": b"tracking=value",
-            "headers": [],
-        }
-    )
-    page = service.get_landing_page(request)
-    base_url = f"https://example.org:8443{path.rstrip('/')}"
+    page = service.get_landing_page()
 
     assert page.id == "catalogue"
     assert page.title == "Example"
     assert page.description == "Example data"
     assert {link.rel: link.get_href() for link in page.links} == {
-        "root": f"{base_url}/",
-        "self": f"{base_url}/",
-        "data": f"{base_url}/collections",
-        "conformance": f"{base_url}/conformance",
-        "search": f"{base_url}/search",
+        "root": "/",
+        "self": "/",
+        "data": "/collections",
+        "conformance": "/conformance",
+        "search": "/search",
     }
     assert page.to_dict()["conformsTo"] == service.get_conformance_declaration().conforms_to
 
@@ -97,10 +83,9 @@ def test_conformance_returns_fresh_fixed_declarations() -> None:
 
 def test_landing_page_returns_independent_metadata() -> None:
     service = EmptyCatalogueService("catalogue", "Example", "Example data")
-    request = Request({"type": "http", "scheme": "https", "path": "/", "headers": []})
-    page = service.get_landing_page(request)
-    original = service.get_landing_page(request).to_dict()
+    page = service.get_landing_page()
+    original = service.get_landing_page().to_dict()
     page.conforms_to.clear()
     page.links.clear()
     page.description = "Changed"
-    assert service.get_landing_page(request).to_dict() == original
+    assert service.get_landing_page().to_dict() == original
