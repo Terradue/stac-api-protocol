@@ -34,6 +34,7 @@ nav:
   - Reference:
       - Overview: reference/index.md
       - Service contract: reference/api.md
+      - Bundled OpenAPI: reference/opneapi.html
   - Explanation:
       - Overview: explanation/index.md
       - Architecture: explanation/architecture.md
