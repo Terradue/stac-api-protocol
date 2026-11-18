@@ -42,6 +42,7 @@ STAC API protocol layer from the underlying data access and implementation logic
 ![Architecture](./diagrams/architecture.svg)
 
 Each source can have its own:
+
 - Data model
 - Metadata representation
 - Query mechanism
@@ -49,6 +50,7 @@ Each source can have its own:
 - Asset location
 - Authentication mechanism
 - Search capabilities and limitations
+
 The facade only needs to translate these capabilities into the STAC API contract.
 
 The provider is discovered through a fixed entry-point contract, and the deployed environment supplies the implementation.
