@@ -128,8 +128,6 @@ Metadata can be mapped on demand from the source system into STAC representation
 
 The facade can be deployed, upgraded, or replaced independently from the data source. It does not need to become the owner of the source's data or lifecycle.
 
-
-
 ## Documentation
 
 - [First service tutorial](tutorials/first-steps.md): build and run a minimal provider.
