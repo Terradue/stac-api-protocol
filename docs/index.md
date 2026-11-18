@@ -16,35 +16,15 @@ limitations under the License.
 
 # STAC API Protocol
 
-STAC API Protocol provides the HTTP layer for STAC API Core, Collections,
-Features, and Item Search. It is developed according to **Hexagonal Architecture
+STAC API Protocol provides the HTTP layer for STAC API _Core_, _Collections_,
+_Features_, and _Item Search_. It is developed according to **Hexagonal Architecture
 (Ports and Adapters)** and the separation of concerns associated with **Clean
-Architecture**: **FastAPI acts exclusively as the HTTP adapter**.
+Architecture**: **FastAPI acts exclusively as the HTTP adapter**, separating the
+STAC API protocol layer from the underlying data access and implementation logic.
 
-Adopters provide the application behavior by implementing `StacApiService`, the
-service port defined in `src/stac_api_protocol/stac_service.py`. Your service
-connects catalogue operations to your domain logic, storage, and search systems.
-This package supplies the routes, request validation, response serialization,
-and HTTP error handling.
+This is particularly valuable when the purpose of an API is to make existing data sources discoverable and accessible through a standard STAC interface, without requiring the data itself to be migrated, reorganized, or managed through a new catalogue infrastructure.
 
-## Integration at a glance
-
-1. Subclass `StacApiService` and implement its five abstract catalogue operations.
-2. Expose a callable factory that returns your service implementation.
-3. Register that factory in your package's `pyproject.toml`:
-
-   ```toml
-   [project.entry-points."stacapi.service"]
-   item_service = "my_catalogue.provider:create_service"
-   ```
-
-4. Install your package alongside `stac-api-protocol`, then serve
-   `stac_api_protocol.main:app` with an ASGI server.
-
-The entry-point group **`stacapi.service`** and entry name **`item_service`** are
-required. The module and factory names on the right-hand side are yours to choose.
-Exactly one installed provider must match. Installing this HTTP adapter alone
-does not supply a catalogue backend.
+![Architecture](./diagrams/architecture.svg)
 
 ## Documentation
 

@@ -56,6 +56,18 @@ plugins:
           options:
             docstring_style: google
             show_source: true
+  - build_plantuml:
+      render: 'server' # or "local" for local rendering
+      disable_ssl_certificate_validation: true # for self-signed and invalid certs
+      output_format: 'svg'
+      allow_multiple_roots: false
+      diagram_root: 'docs/diagrams'
+      input_folder: 'src'
+      output_folder: '.'
+      theme_enabled: true
+      theme_folder: "include/themes"
+      theme_light: "light.puml"
+      theme_dark: "dark.puml"
 
 markdown_extensions:
   - admonition

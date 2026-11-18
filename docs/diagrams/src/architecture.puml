@@ -1,0 +1,71 @@
+@startuml
+allowmixing
+
+() "HTTP" as http
+
+component "STAC API - Protocol" as stac_api_protocol {
+  component "STAC APIs" as fast <<FastAPI>>
+  
+  component "OpenSearch" as osws_s <<Service>>
+  component "Relational DataBase" as rdb_s <<Service>>
+  component "Graph" as gdb_s <<Service>>
+  component "Document DataBase" as ddb_s <<Service>>
+  component "Key/Value Store" as kvdb_s <<Service>>
+
+  fast --> osws_s : ""project.entry-points."stacapi.service"""
+  fast --> rdb_s : ""project.entry-points."stacapi.service"""
+  fast --> gdb_s : ""project.entry-points."stacapi.service"""
+  fast --> ddb_s : ""project.entry-points."stacapi.service"""
+  fast --> kvdb_s : ""project.entry-points."stacapi.service"""
+}
+
+note left of stac_api_protocol
+Supports STAC API:
+* Core
+* Collections
+* Features
+* Item Search
+end note
+
+http -- stac_api_protocol : STAC APIs
+
+cloud "OpenSearch Web Service" as osws
+
+database "Relational DataBase" as rdb {
+  object "Table 1" as table_a
+  object "Table N" as table_n
+  diamond dia
+  table_a -> dia
+  dia -> table_n
+}
+
+database "Graph" as gdb {
+  state Node1
+  state Node2
+  state NodeN
+  
+  Node1 -> Node2
+  Node1 --> NodeN
+  Node2 --> NodeN
+}
+
+database "Document DataBase" as ddb {
+  artifact "Document 1" as d1
+  artifact "Document N" as dn
+  d1 -[hidden]- dn
+}
+
+database "Key/Value Store" as kvdb {
+  map "Data" as myMap {
+    Key1 => Value1
+    Key2 => Value2
+  }
+}
+
+osws_s --> osws
+rdb_s --> rdb
+gdb_s --> gdb
+ddb_s --> ddb
+kvdb_s --> kvdb
+
+@enduml
