@@ -41,5 +41,11 @@ required. The module and factory names on the right-hand side are yours to choos
 Exactly one installed provider must match. Installing this HTTP adapter alone
 does not supply a catalogue backend.
 
+## One application, multiple interchangeable providers
+
+The protocol defines a `StacApiService` contract, while implementations provide the actual catalogue behavior. The service factory is registered using Python entry points, so the HTTP application can remain independent of the provider implementation. 
+
+For example, the same application could be deployed with different providers and the application itself does not need to know which implementation is deployed.
+
 [Service contract](api.md) documents the `StacApiService` operations, their HTTP
 routes, result semantics, and provider discovery.
