@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://terradue.github.io/stac-api-protocol/explanation/architecture/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Architecture - STAC API Protocol</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Architecture";
+        var mkdocs_page_input_path = "explanation/architecture.md";
+        var mkdocs_page_url = "/stac-api-protocol/explanation/architecture/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> STAC API Protocol
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/first-steps/">Build your first service</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">How-to guides</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../how-to/">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../how-to/install/">Install and run</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../how-to/register-service/">Register a service factory</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/api/">Service contract</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/openapi.html">Bundled OpenAPI</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Explanation</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../">Overview</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Architecture</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#the-service-port">The service port</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#responsibilities">Responsibilities</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#runtime-composition">Runtime composition</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#schema-first-http-contracts">Schema-first HTTP contracts</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">STAC API Protocol</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Explanation</li>
+      <li class="breadcrumb-item active">Architecture</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/Terradue/stac-api-protocol/edit/main/docs/explanation/architecture.md">Edit on stac-api-protocol</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <!--
+Copyright 2026 Terradue
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<h1 id="architecture-ports-and-adapters">Architecture: Ports and Adapters<a class="headerlink" href="#architecture-ports-and-adapters" title="Permanent link">&para;</a></h1>
+<p>STAC API Protocol is developed according to <strong>Hexagonal Architecture (Ports and
+Adapters)</strong>. It follows the same separation of application behavior from delivery
+mechanisms emphasized by <strong>Clean Architecture</strong>. These are closely related
+architectural approaches; here their practical consequence is that <strong>FastAPI
+acts exclusively as the HTTP adapter</strong>.</p>
+<h2 id="the-service-port">The service port<a class="headerlink" href="#the-service-port" title="Permanent link">&para;</a></h2>
+<p><code>StacApiService</code>, defined in <code>src/stac_api_protocol/stac_service.py</code>, is the boundary
+between the HTTP adapter and an adopter's catalogue application. It is an abstract base class with five adopter-defined catalogue operations and
+two final metadata methods. Adopters subclass it and supply a catalogue identifier,
+title, and description. Incomplete subclasses cannot be instantiated.</p>
+<p>The shared landing-page method receives a FastAPI <code>Request</code> to derive public
+links. This is an HTTP coupling in the current service contract; catalogue search
+and retrieval operations remain independent of FastAPI request objects. The
+conformance method returns a fixed declaration of the four bundled STAC API
+classes, which each adopter must implement.</p>
+<div class="highlight"><pre><span></span><code>HTTP client
+    |
+    v
+FastAPI HTTP adapter (stac_api_protocol.main)
+    |
+    | calls the StacApiService port
+    v
+Adopter's service implementation
+    |
+    v
+Application/domain logic and backend integrations
+    |
+    v
+Catalogue storage, search engine, or remote services
+</code></pre></div>
+<p>This diagram shows request flow. The HTTP adapter depends on the service contract;
+it does not import a concrete adopter implementation. The adopter supplies that
+implementation at runtime through an installed Python entry point.</p>
+<h2 id="responsibilities">Responsibilities<a class="headerlink" href="#responsibilities" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FastAPI HTTP adapter</td>
+<td>Route requests, parse and validate HTTP inputs, invoke the service, serialize results, and translate failures into HTTP responses.</td>
+</tr>
+<tr>
+<td><code>StacApiService</code> port</td>
+<td>Define the operations and data types required by the adapter.</td>
+</tr>
+<tr>
+<td>Adopter's service</td>
+<td>Implement catalogue use cases, filtering, lookup, and result construction; coordinate domain logic and backend access.</td>
+</tr>
+<tr>
+<td>Adopter's backend integrations</td>
+<td>Access databases, indexes, files, or remote services as required by the application.</td>
+</tr>
+<tr>
+<td>Provider factory</td>
+<td>Construct or obtain a configured service and supply it to the HTTP adapter.</td>
+</tr>
+</tbody>
+</table>
+<p>Keep FastAPI responses and dependency injection out of your catalogue business
+logic. Apart from the shared landing-page method, service methods receive ordinary
+filter values and return the
+STAC objects specified by the port. If your domain uses different objects, map
+them to these types at the service boundary. The port intentionally uses PySTAC,
+GeoJSON, and package models; it is a STAC-facing contract, not a universal domain
+model.</p>
+<h2 id="runtime-composition">Runtime composition<a class="headerlink" href="#runtime-composition" title="Permanent link">&para;</a></h2>
+<p>When <code>stac_api_protocol.main</code> is imported, <code>load_dependency("item_service")</code>
+looks up installed entry points in the <code>stacapi.service</code> group. It loads the
+unique matching callable. FastAPI then uses that callable through <code>Depends</code>
+to obtain the service for route execution.</p>
+<p>Discovery loads the factory; it does not call it to create a global service.
+Do not assume the adapter constructs a singleton or manages your backend's
+connection lifecycle. Your provider and deployment must choose the appropriate
+resource lifetime. A simple zero-argument factory is sufficient to get started.</p>
+<p>The loader checks that there is exactly one matching entry and that it is
+callable. It does not validate the returned object's implementation of the service contract.
+Type-check and test your implementation against the service contract.</p>
+<p>See <a href="../../how-to/register-service/">factory registration</a> for the exact metadata
+and <a href="../../tutorials/first-steps/">the tutorial</a> for a runnable example.</p>
+<h2 id="schema-first-http-contracts">Schema-first HTTP contracts<a class="headerlink" href="#schema-first-http-contracts" title="Permanent link">&para;</a></h2>
+<p>The OpenAPI schema under <code>schemas/</code> is the source of truth for generated API
+artifacts. Adopters should reuse the existing models and implement the service
+port instead of editing generated routes or models to attach a backend. Changes
+to schema-defined contracts belong in the schema and the repository's configured
+generation workflow.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../" class="btn btn-neutral float-left" title="Overview"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/Terradue/stac-api-protocol" class="fa fa-code-fork" style="color: #fcfcfc"> stac-api-protocol</a>
+        </span>
+    
+    
+      <span><a href="../" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
