@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Breaking:** Added [STAC API - Filter Extension Specification](https://github.com/stac-api-extensions/filter) support.
+- **Breaking:** Added protocol-level support for the [STAC API - Filter Extension Specification v1.0.0-rc.4](https://github.com/stac-api-extensions/filter/blob/v1.0.0-rc.4/README.md), including CQL2 Text and CQL2 JSON request handling, queryables endpoints, and conformance declarations. Service providers must accept the new `filter` argument in `get_features` and `get_item_search` and implement filter evaluation.
 
 ## [0.1.1] - 2026-11-14
 

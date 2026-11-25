@@ -34,6 +34,13 @@ The script makes one request per API operation, including both GET and POST
 search, using an actual NAIP tile and spatial/temporal bounds from the dataset.
 Swagger documentation is available at `/docs`.
 
+Since version 0.2.0, the protocol supports the
+[STAC API - Filter Extension Specification v1.0.0-rc.4](https://github.com/stac-api-extensions/filter/blob/v1.0.0-rc.4/README.md).
+The script's GET and POST `/search` examples send CQL2 JSON filters and require a
+provider that evaluates them. This demo provider rejects CQL2 filters; its supported
+search constraints are listed below. Protocol support does not add filter
+evaluation to the demo backend.
+
 All five collection descriptions are exposed. Only NAIP items are loaded;
 other listed collections have empty item results. Unknown collections and missing
 individual items return 404. Searches support IDs, collections, bbox, intersects,
@@ -44,7 +51,7 @@ The original asset and item links are preserved and may point to Planetary Compu
 
 GET `bbox` accepts comma-separated coordinates or repeated query parameters.
 Other GET lists use repeated query parameters, and POST `intersects` is a
-JSON-encoded string. It does not add a CQL
-endpoint; `pygeofilter-duckdb` translates the existing search arguments internally.
+JSON-encoded string. `pygeofilter-duckdb` translates the existing search arguments
+internally.
 Each query uses its own DuckDB connection. Runtime queries use downloaded local
 files and a preinstalled spatial extension, with no external database server.

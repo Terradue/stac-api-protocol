@@ -18,6 +18,13 @@ limitations under the License.
 
 **STAC API Protocol enables existing data systems to become interoperable STAC API services without requiring them to adopt a new catalogue infrastructure.**
 
+**Since version 0.2.0, the protocol implementation supports the
+[STAC API - Filter Extension Specification v1.0.0-rc.4](https://github.com/stac-api-extensions/filter/blob/v1.0.0-rc.4/README.md).**
+The HTTP adapter handles CQL2 Text and CQL2 JSON requests, exposes queryables, and
+advertises Filter conformance. Service providers implement filter evaluation
+against their data. See the [Filter Extension service contract](reference/api.md#filter-extension-support-since-020)
+for supported routes and provider requirements.
+
 Built around a clean separation between the HTTP protocol layer for STAC API _Core_, _Collections_,
 _Features_, and _Item Search_ and the underlying data services, it provides the essential STAC API functionality while leaving data access, metadata mapping, and catalogue operations to pluggable implementations.
 
