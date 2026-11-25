@@ -101,10 +101,10 @@ def test_bbox_query_encodings_reach_service(
     assert json.loads(body)["type"] == "FeatureCollection"
     if path == "/search":
         service.get_item_search.assert_called_once_with(
-            expected, None, datetime_value, 2, None, None
+            expected, None, datetime_value, 2, None, None, None
         )
     else:
-        service.get_features.assert_called_once_with("naip", 2, expected, datetime_value)
+        service.get_features.assert_called_once_with("naip", 2, expected, datetime_value, None)
 
 
 @pytest.mark.parametrize("path", ["/collections/naip/items", "/search"])

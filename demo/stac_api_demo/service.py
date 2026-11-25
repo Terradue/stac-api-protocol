@@ -93,6 +93,21 @@ def _bbox_filter(bbox: list[float]) -> ast.Node:
     return ast.BBox(geometry, west, south, east, north)
 
 
+def _spatial_filters(
+    bbox: list[float] | None,
+    intersects: GeometryGeoJSON | GeometryCollection | None,
+) -> list[ast.Node]:
+    """Build spatial predicates from the standard Item Search parameters."""
+    filters: list[ast.Node] = []
+    if bbox is not None:
+        filters.append(_bbox_filter(bbox))
+    if intersects is not None:
+        filters.append(
+            ast.GeometryIntersects(ast.Attribute("geometry"), values.Geometry(intersects))
+        )
+    return filters
+
+
 def _read_item(payload: str) -> Item:
     """Restore nested STAC properties from a flattened GeoParquet row."""
     record = json.loads(payload)
@@ -148,11 +163,16 @@ class GeoParquetService(StacApiService):
         limit: int | None,
         bbox: list[float] | None,
         datetime: str | None,
+        filter: str | dict[str, object] | bool | None = None,
     ) -> ItemCollection | None:
-        """Return a collection's matching items, or None for an unknown collection."""
+        """Return a collection's matching items, or None for an unknown collection.
+
+        Raises:
+            NotImplementedError: If a CQL2 filter is supplied for an existing collection.
+        """
         if collection_id not in self._collections:
             return None
-        return self.get_item_search(bbox, None, datetime, limit, None, [collection_id])
+        return self.get_item_search(bbox, None, datetime, limit, None, [collection_id], filter)
 
     def get_feature(self, collection_id: str, feature_id: str) -> Item | None:
         """Look up an item by both collection and item ID, returning None if absent."""
@@ -167,24 +187,26 @@ class GeoParquetService(StacApiService):
         limit: int | None,
         ids: list[str] | None,
         collections: list[str] | None,
+        filter: str | dict[str, object] | bool | None = None,
     ) -> ItemCollection:
         """Search NAIP using conjunctive filters and a deterministic, limited result.
 
         Unloaded collections and unmatched criteria produce an empty collection.
         The demo returns at most 10 items by default and does not paginate.
+
+        Raises:
+            NotImplementedError: If a CQL2 filter is supplied. This demo only
+                implements the standard Item Search parameters.
         """
+        if filter is not None:
+            raise NotImplementedError("The demo does not implement CQL2 filtering")
         filters: list[ast.Node] = []
         for field, choices in (("id", ids), ("collection", collections)):
             if choices is not None:
                 if not choices:
                     return ItemCollection([])
                 filters.append(ast.In(ast.Attribute(field), list(choices), False))
-        if bbox is not None:
-            filters.append(_bbox_filter(bbox))
-        if intersects is not None:
-            filters.append(
-                ast.GeometryIntersects(ast.Attribute("geometry"), values.Geometry(intersects))
-            )
+        filters.extend(_spatial_filters(bbox, intersects))
         if datetime is not None:
             filters.extend(_temporal_filters(datetime))
         return self._query(filters, limit if limit is not None else 10)

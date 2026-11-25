@@ -18,7 +18,13 @@ import pytest
 from pydantic import ValidationError
 from pystac import Collection, Extent, Link, SpatialExtent, TemporalExtent
 
-from stac_api_protocol.models import Collections, ConformanceClasses, LandingPage, SearchBody
+from stac_api_protocol.models import (
+    Collections,
+    ConformanceClasses,
+    FilterLang,
+    LandingPage,
+    SearchBody,
+)
 
 
 @pytest.mark.parametrize("limit", [1, 10000, None])
@@ -41,6 +47,9 @@ def test_search_defaults_and_extension_fields() -> None:
         "intersects": None,
         "datetime": None,
         "bbox": None,
+        "filter": None,
+        "filter_lang": FilterLang.CQL2_JSON,
+        "filter_crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
         "custom:filter": "value",
     }
 

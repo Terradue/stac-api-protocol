@@ -51,13 +51,17 @@ def test_valid_datetimes_reach_service(
     service.get_item_search.return_value = ItemCollection([])
     if method == "features":
         api.get_features("sentinel", 10, None, datetime_value, service=service)
-        service.get_features.assert_called_once_with("sentinel", 10, None, datetime_value)
+        service.get_features.assert_called_once_with("sentinel", 10, None, datetime_value, None)
     elif method == "get":
         api.get_item_search(None, None, datetime_value, 10, None, None, service=service)
-        service.get_item_search.assert_called_once_with(None, None, datetime_value, 10, None, None)
+        service.get_item_search.assert_called_once_with(
+            None, None, datetime_value, 10, None, None, None
+        )
     else:
         api.post_item_search(SearchBody(datetime=datetime_value), service=service)
-        service.get_item_search.assert_called_once_with(None, None, datetime_value, 10, None, None)
+        service.get_item_search.assert_called_once_with(
+            None, None, datetime_value, 10, None, None, None
+        )
 
 
 @pytest.mark.parametrize("method", ["features", "get", "post"])
@@ -132,5 +136,5 @@ def test_get_search_parses_geometry(api: ModuleType, service: Mock, geometry: st
     service.get_item_search.return_value = ItemCollection([])
     api.get_item_search(None, geometry, None, 10, ["scene"], ["sentinel"], service=service)
     service.get_item_search.assert_called_once_with(
-        None, json.loads(geometry), None, 10, ["scene"], ["sentinel"]
+        None, json.loads(geometry), None, 10, ["scene"], ["sentinel"], None
     )
