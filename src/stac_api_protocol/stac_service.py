@@ -64,7 +64,13 @@ class StacApiService(ABC):
         landing_page.add_link(Link("data", "/collections"))
         landing_page.add_link(Link("conformance", "/conformance"))
         landing_page.add_link(Link("search", "/search"))
-        landing_page.add_link(Link("queryables", "/queryables"))
+        landing_page.add_link(
+            Link(
+                "http://www.opengis.net/def/rel/ogc/1.0/queryables",
+                "/queryables",
+                media_type="application/schema+json",
+            )
+        )
 
         landing_page.conforms_to = self.get_conformance_declaration().conforms_to
         return landing_page

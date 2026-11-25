@@ -64,6 +64,7 @@ def test_landing_page_uses_root_relative_links() -> None:
         "data": "/collections",
         "conformance": "/conformance",
         "search": "/search",
+        "http://www.opengis.net/def/rel/ogc/1.0/queryables": "/queryables",
     }
     assert page.to_dict()["conformsTo"] == service.get_conformance_declaration().conforms_to
 

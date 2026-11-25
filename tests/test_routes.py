@@ -37,7 +37,6 @@ if TYPE_CHECKING:
     ("route", "arguments"),
     [
         ("get_landing_page", ()),
-        ("describe_collection", ("sentinel",)),
         ("get_feature", ("sentinel", "scene")),
         ("get_features", ("sentinel", 20, [1.0, 2.0, 3.0, 4.0], None)),
         ("get_item_search", (None, None, None, 10, None, None)),
@@ -55,7 +54,7 @@ def test_routes_serialize_service_results(
     backend.assert_called_once_with(*arguments)
 
 
-@pytest.mark.parametrize("route", ["get_collections", "get_conformance_declaration"])
+@pytest.mark.parametrize("route", ["get_conformance_declaration"])
 def test_routes_return_service_models(api: ModuleType, service: Mock, route: str) -> None:
     backend = getattr(service, route)
     assert getattr(api, route)(service=service) is backend.return_value

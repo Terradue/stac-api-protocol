@@ -18,11 +18,14 @@
 
 """Expose STAC routes backed by the configured service provider."""
 
+import json
 import logging
 import math
 import re
 from datetime import datetime as DateTime
+from importlib.resources import files
 from typing import TYPE_CHECKING, Annotated
+from urllib.parse import quote
 
 from fastapi import Depends, FastAPI, HTTPException, Path, Query, Request, Response, status
 from fastapi.exceptions import RequestValidationError
@@ -30,10 +33,11 @@ from fastapi.responses import JSONResponse
 from geojson import GeometryCollection, loads
 from geojson.geometry import Geometry as GeometryGeoJSON
 from pydantic import AfterValidator, BeforeValidator
+from pystac import Collection, Link
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 if TYPE_CHECKING:
-    from pystac import Collection, Item, ItemCollection
+    from pystac import Item, ItemCollection
 
 from .models import (
     CRS84,
@@ -182,6 +186,21 @@ def get_landing_page(service: StacApiService = Depends(get_item_service)) -> Res
     raise _not_found("Landing Page does not exist in this Catalogue")
 
 
+def _collection_with_queryables(collection: Collection) -> Collection:
+    """Copy collection metadata and advertise its protocol queryables endpoint."""
+    linked_collection = collection.clone()
+    relation = "http://www.opengis.net/def/rel/ogc/1.0/queryables"
+    linked_collection.remove_links(relation)
+    linked_collection.add_link(
+        Link(
+            relation,
+            f"/collections/{quote(collection.id, safe='')}/queryables",
+            media_type="application/schema+json",
+        )
+    )
+    return linked_collection
+
+
 @app.get(
     "/collections",
     response_model=Collections,
@@ -191,7 +210,12 @@ def get_landing_page(service: StacApiService = Depends(get_item_service)) -> Res
 def get_collections(service: StacApiService = Depends(get_item_service)) -> Collections:
     """List collections from the configured service."""
     try:
-        return service.get_collections()
+        result = service.get_collections()
+        return result.model_copy(
+            update={
+                "collections": [_collection_with_queryables(entry) for entry in result.collections]
+            }
+        )
     except Exception as e:
         raise _server_error(
             f"An error occurred when retrieving the Collections for the current Catalogue: {e}"
@@ -218,7 +242,7 @@ def describe_collection(
         ) from e
 
     if collection:
-        return JSONResponse(content=collection.to_dict())
+        return JSONResponse(content=_collection_with_queryables(collection).to_dict())
 
     raise _not_found(f"Collection {collection_id} does not exist in this Catalogue")
 
@@ -254,7 +278,7 @@ def _get_filter(
 ) -> str | dict | None:
     if not filter:
         return None
-    
+
     if isinstance(filter, str):
         if filter_lang == FilterLang.CQL2_TEXT:
             return filter
@@ -297,11 +321,7 @@ def get_features(
 
     try:
         search_result = service.get_features(
-            collection_id,
-            limit,
-            bbox,
-            datetime,
-            _get_filter(filter, filter_lang)
+            collection_id, limit, bbox, datetime, _get_filter(filter, filter_lang)
         )
     except Exception as e:
         raise _server_error(
@@ -395,52 +415,48 @@ def _item_search(
 
 
 @app.get(
-    '/queryables',
-    responses={'default': {'model': StacException}},
-    tags=['Filter Extension'],
+    "/queryables",
+    response_class=Response,
+    responses={
+        "200": {"content": {"application/schema+json": {}}},
+        "default": {"model": StacException},
+    },
+    tags=["Filter Extension"],
 )
-def get_queryables() -> Response:
+def get_queryables(request: Request) -> Response:
+    """Return the shared queryables schema identified by the requested URL."""
+    schema = json.loads(files("stac_api_protocol").joinpath("queryables.json").read_text("utf-8"))
+    schema["$id"] = str(request.url.replace(query=""))
+    return JSONResponse(content=schema, media_type="application/schema+json")
+
+
+@app.get(
+    "/collections/{collectionId}/queryables",
+    response_class=Response,
+    responses={
+        "200": {"content": {"application/schema+json": {}}},
+        "default": {"model": StacException},
+    },
+    tags=["Filter Extension"],
+)
+def get_collection_queryables(
+    request: Request,
+    collection_id: str = Path(..., alias="collectionId"),
+    service: StacApiService = Depends(get_item_service),
+) -> Response:
+    """Return the shared queryables schema for an existing collection.
+
+    Raises:
+        HTTPException: With status 404 if the collection does not exist, or
+            status 500 if the provider cannot retrieve collection metadata.
     """
-    Get the JSON Schema defining the list of variable terms that can be used in CQL2 expressions.
-    """
-    return JSONResponse(content={
-        "$schema": "https://json-schema.org/draft-07/schema",
-        "$id": "https://stac.opensearch.dataspace.copernicus.eu/v1/queryables",
-        "type": "object",
-        "title": "Queryables for STAC API",
-        "description": "Queryable names for the STAC API Item Search filter.",
-        "properties": {
-            "id": {
-                "description": "ID",
-                "$ref": "https://schemas.stacspec.org/v1.0.0/item-spec/json-schema/item.json#/definitions/core/allOf/2/properties/id"
-            },
-            "collection": {
-                "description": "Collection",
-                "$ref": "https://schemas.stacspec.org/v1.0.0/item-spec/json-schema/item.json#/definitions/core/allOf/2/then/properties/collection"
-            },
-            "geometry": {
-                "description": "Geometry",
-                "$ref": "https://schemas.stacspec.org/v1.0.0/item-spec/json-schema/item.json#/definitions/core/allOf/1/oneOf/0/properties/geometry"
-            },
-            "datetime": {
-                "description": "Acquisition Timestamp",
-                "$ref": "https://schemas.stacspec.org/v1.0.0/item-spec/json-schema/datetime.json#/properties/datetime"
-            },
-            "created": {
-                "description": "Creation Timestamp",
-                "$ref": "https://schemas.stacspec.org/v1.0.0/item-spec/json-schema/datetime.json#/properties/created"
-            },
-            "updated": {
-                "description": "Last Update Time",
-                "$ref": "https://schemas.stacspec.org/v1.0.0/item-spec/json-schema/datetime.json#/properties/updated"
-            },
-            "filter": {
-                "description": "A CQL2 filter expression for filtering items.",
-                "$ref": "https://raw.githubusercontent.com/stac-api-extensions/filter/refs/heads/main/openapi.yaml#/components/parameters/filter"
-            }
-        },
-        "additionalProperties": True
-    })
+    try:
+        collection = service.describe_collection(collection_id)
+    except Exception as error:
+        raise _server_error("Unable to retrieve collection metadata") from error
+    if collection is None:
+        raise _not_found(f"Collection {collection_id} does not exist in this Catalogue")
+    return get_queryables(request)
 
 
 def _parse_intersects(value: str | None) -> GeometryGeoJSON | GeometryCollection | None:

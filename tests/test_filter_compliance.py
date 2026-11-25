@@ -34,9 +34,9 @@ from urllib.parse import urlencode, urlsplit
 
 import pytest
 from pydantic import ValidationError
-from pystac import ItemCollection
+from pystac import Collection, Extent, ItemCollection, SpatialExtent, TemporalExtent
 
-from stac_api_protocol.models import FilterLang, SearchBody
+from stac_api_protocol.models import Collections, FilterLang, SearchBody
 from stac_api_protocol.stac_service import StacApiService
 
 if TYPE_CHECKING:
@@ -54,11 +54,14 @@ CQL2_PREFIX = "http://www.opengis.net/spec/cql2/1.0/conf/"
 
 
 @pytest.fixture
-def filter_app(api: ModuleType, service: Mock) -> Iterator[FastAPI]:
+def filter_app(
+    api: ModuleType, service: Mock, queryables_collection: Collection
+) -> Iterator[FastAPI]:
     """Isolate HTTP decoding from provider evaluation and external catalogues."""
     app: FastAPI = api.app
     service.get_item_search.return_value = ItemCollection([])
     service.get_features.return_value = ItemCollection([])
+    service.describe_collection.return_value = queryables_collection
     app.dependency_overrides[api.get_item_service] = lambda: service
     try:
         yield app
@@ -358,3 +361,76 @@ def test_filter_routes_generate_openapi_with_string_get_filters(api: ModuleType)
         "application/json"
     ]["schema"]
     assert error_schema == {"$ref": "#/components/schemas/Exception"}
+
+
+@pytest.fixture
+def queryables_collection() -> Collection:
+    """Provide real metadata while keeping all provider operations mocked."""
+    return Collection(
+        "sentinel",
+        "Test collection",
+        Extent(SpatialExtent([-180, -90, 180, 90]), TemporalExtent([None, None])),
+    )
+
+
+@pytest.mark.parametrize("path", ["/queryables", "/collections/sentinel/queryables"])
+def test_queryables_identity_excludes_query_string(filter_app: FastAPI, path: str) -> None:
+    status, body, _ = asyncio.run(_request(filter_app, "GET", path, {"unused": "value"}))
+    assert status == HTTPStatus.OK
+    schema = json.loads(body)
+    assert schema["$id"] == "http://localhost:8000" + path
+    assert "filter" not in schema["properties"]
+    assert {"id", "collection", "geometry", "datetime"} <= schema["properties"].keys()
+
+
+@pytest.mark.parametrize("path", ["/collections/sentinel", "/collections"])
+def test_collection_responses_advertise_queryables_without_mutating_provider_metadata(
+    filter_app: FastAPI, service: Mock, queryables_collection: Collection, path: str
+) -> None:
+    service.get_collections.return_value = Collections(
+        collections=[queryables_collection], links=[]
+    )
+    original = queryables_collection.to_dict()
+    status, body, _ = asyncio.run(_request(filter_app, "GET", path, {}))
+    assert status == HTTPStatus.OK
+    payload = json.loads(body)
+    collection = payload["collections"][0] if path == "/collections" else payload
+    links = [link for link in collection["links"] if link["rel"] == QUERYABLES_REL]
+    assert links == [
+        {
+            "rel": QUERYABLES_REL,
+            "href": "/collections/sentinel/queryables",
+            "type": "application/schema+json",
+        }
+    ]
+    assert queryables_collection.to_dict() == original
+
+
+def test_unknown_collection_queryables_returns_not_found(
+    filter_app: FastAPI, service: Mock
+) -> None:
+    service.describe_collection.return_value = None
+    status, body, _ = asyncio.run(
+        _request(filter_app, "GET", "/collections/unknown/queryables", {})
+    )
+    assert status == HTTPStatus.NOT_FOUND
+    assert json.loads(body)["code"] == "404"
+    service.describe_collection.assert_called_once_with("unknown")
+
+
+def test_collection_queryables_provider_failure_returns_server_error(
+    filter_app: FastAPI, service: Mock
+) -> None:
+    service.describe_collection.side_effect = RuntimeError("private details")
+    status, body, _ = asyncio.run(
+        _request(filter_app, "GET", "/collections/sentinel/queryables", {})
+    )
+    assert status == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert json.loads(body)["code"] == "500"
+    assert "private details" not in body.decode()
+
+
+def test_queryables_openapi_advertises_schema_media_type(api: ModuleType) -> None:
+    for path in ("/queryables", "/collections/{collectionId}/queryables"):
+        response = api.app.openapi()["paths"][path]["get"]["responses"]["200"]
+        assert set(response["content"]) == {"application/schema+json"}
