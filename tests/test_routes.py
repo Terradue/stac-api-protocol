@@ -36,11 +36,10 @@ if TYPE_CHECKING:
 @pytest.mark.parametrize(
     ("route", "arguments"),
     [
-        ("get_landing_page", (Request({"type": "http"}),)),
-        ("describe_collection", ("sentinel",)),
+        ("get_landing_page", ()),
         ("get_feature", ("sentinel", "scene")),
-        ("get_features", ("sentinel", 20, [1.0, 2.0, 3.0, 4.0], None)),
-        ("get_item_search", (None, None, None, 10, None, None)),
+        ("get_features", ("sentinel", 20, [1.0, 2.0, 3.0, 4.0], None, None)),
+        ("get_item_search", (None, None, None, 10, None, None, None)),
     ],
 )
 def test_routes_serialize_service_results(
@@ -55,7 +54,7 @@ def test_routes_serialize_service_results(
     backend.assert_called_once_with(*arguments)
 
 
-@pytest.mark.parametrize("route", ["get_collections", "get_conformance_declaration"])
+@pytest.mark.parametrize("route", ["get_conformance_declaration"])
 def test_routes_return_service_models(api: ModuleType, service: Mock, route: str) -> None:
     backend = getattr(service, route)
     assert getattr(api, route)(service=service) is backend.return_value
@@ -65,11 +64,11 @@ def test_routes_return_service_models(api: ModuleType, service: Mock, route: str
 @pytest.mark.parametrize(
     ("route", "arguments"),
     [
-        ("get_landing_page", (Request({"type": "http"}),)),
+        ("get_landing_page", ()),
         ("describe_collection", ("sentinel",)),
         ("get_feature", ("sentinel", "scene")),
         ("get_features", ("sentinel", 10, None, None)),
-        ("get_item_search", (None, None, None, 10, None, None)),
+        ("get_item_search", (None, None, None, 10, None, None, None)),
     ],
 )
 def test_missing_results_raise_not_found(
@@ -85,13 +84,13 @@ def test_missing_results_raise_not_found(
 @pytest.mark.parametrize(
     ("route", "arguments"),
     [
-        ("get_landing_page", (Request({"type": "http"}),)),
+        ("get_landing_page", ()),
         ("get_collections", ()),
         ("get_conformance_declaration", ()),
         ("describe_collection", ("sentinel",)),
         ("get_feature", ("sentinel", "scene")),
         ("get_features", ("sentinel", 10, None, None)),
-        ("get_item_search", (None, None, None, 10, None, None)),
+        ("get_item_search", (None, None, None, 10, None, None, None)),
     ],
 )
 def test_backend_errors_become_server_errors(
@@ -138,6 +137,7 @@ def test_post_search_forwards_all_filters(api: ModuleType, service: Mock) -> Non
         body.limit,
         body.ids,
         body.collections,
+        None,
     )
     assert response.status_code == HTTPStatus.OK
 
@@ -145,7 +145,7 @@ def test_post_search_forwards_all_filters(api: ModuleType, service: Mock) -> Non
 def test_post_search_defaults(api: ModuleType, service: Mock) -> None:
     service.get_item_search.return_value = ItemCollection([])
     api.post_item_search(SearchBody(), service=service)
-    service.get_item_search.assert_called_once_with(None, None, None, 10, None, None)
+    service.get_item_search.assert_called_once_with(None, None, None, 10, None, None, None)
 
 
 def test_post_search_requires_body(api: ModuleType, service: Mock) -> None:

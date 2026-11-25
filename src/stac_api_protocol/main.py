@@ -18,24 +18,36 @@
 
 """Expose STAC routes backed by the configured service provider."""
 
+import json
 import logging
 import math
 import re
 from datetime import datetime as DateTime
+from importlib.resources import files
 from typing import TYPE_CHECKING, Annotated
+from urllib.parse import quote
 
 from fastapi import Depends, FastAPI, HTTPException, Path, Query, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from geojson import GeometryCollection, loads
 from geojson.geometry import Geometry as GeometryGeoJSON
-from pydantic import AfterValidator, BeforeValidator
+from pydantic import AfterValidator, BeforeValidator, ValidationError
+from pystac import Collection, Link
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 if TYPE_CHECKING:
-    from pystac import Collection, Item, ItemCollection
+    from pystac import Item, ItemCollection
 
-from .models import Collections, ConformanceClasses, LandingPage, SearchBody
+from .models import (
+    CRS84,
+    Collections,
+    ConformanceClasses,
+    Cql2Expression,
+    FilterLang,
+    LandingPage,
+    SearchBody,
+)
 from .models import Exception as StacException
 from .plugin_loader import load_dependency
 from .stac_service import StacApiService
@@ -161,12 +173,10 @@ def _validate_datetime(datetime_value: str | None) -> None:
     responses={"4XX": {"model": StacException}, "5XX": {"model": StacException}},
     tags=["Core"],
 )
-def get_landing_page(
-    request: Request, service: StacApiService = Depends(get_item_service)
-) -> Response:
+def get_landing_page(service: StacApiService = Depends(get_item_service)) -> Response:
     """Return the configured service catalogue landing page."""
     try:
-        landing_page: LandingPage = service.get_landing_page(request)
+        landing_page: LandingPage = service.get_landing_page()
     except Exception as e:
         raise _server_error(f"An error occurred when looking for the Landing Page: {e}") from e
 
@@ -174,6 +184,21 @@ def get_landing_page(
         return JSONResponse(content=landing_page.to_dict())
 
     raise _not_found("Landing Page does not exist in this Catalogue")
+
+
+def _collection_with_queryables(collection: Collection) -> Collection:
+    """Copy collection metadata and advertise its protocol queryables endpoint."""
+    linked_collection = collection.clone()
+    relation = "http://www.opengis.net/def/rel/ogc/1.0/queryables"
+    linked_collection.remove_links(relation)
+    linked_collection.add_link(
+        Link(
+            relation,
+            f"/collections/{quote(collection.id, safe='')}/queryables",
+            media_type="application/schema+json",
+        )
+    )
+    return linked_collection
 
 
 @app.get(
@@ -185,7 +210,12 @@ def get_landing_page(
 def get_collections(service: StacApiService = Depends(get_item_service)) -> Collections:
     """List collections from the configured service."""
     try:
-        return service.get_collections()
+        result = service.get_collections()
+        return result.model_copy(
+            update={
+                "collections": [_collection_with_queryables(entry) for entry in result.collections]
+            }
+        )
     except Exception as e:
         raise _server_error(
             f"An error occurred when retrieving the Collections for the current Catalogue: {e}"
@@ -212,7 +242,7 @@ def describe_collection(
         ) from e
 
     if collection:
-        return JSONResponse(content=collection.to_dict())
+        return JSONResponse(content=_collection_with_queryables(collection).to_dict())
 
     raise _not_found(f"Collection {collection_id} does not exist in this Catalogue")
 
@@ -242,6 +272,34 @@ def _validate_bbox_coordinates(bbox: list[float] | None) -> list[float] | None:
     return bbox
 
 
+def _get_filter(
+    filter_value: str | Cql2Expression | None,
+    filter_lang: FilterLang,
+) -> str | dict[str, object] | bool | None:
+    """Decode CQL2 JSON or preserve CQL2 text for the provider.
+
+    Raises:
+        HTTPException: With status 400 if the encoded JSON expression is invalid.
+    """
+    if filter_value is None:
+        return None
+
+    if isinstance(filter_value, str):
+        if filter_lang == FilterLang.CQL2_TEXT:
+            return filter_value
+
+        try:
+            filter_value = Cql2Expression.model_validate_json(filter_value)
+        except ValidationError as error:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Input filter is not a valid 'cql2-json' expression",
+            ) from error
+
+    expression: dict[str, object] | bool = filter_value.model_dump(mode="json")
+    return expression
+
+
 @app.get(
     "/collections/{collectionId}/items",
     responses={"4XX": {"model": StacException}, "5XX": {"model": StacException}},
@@ -257,19 +315,19 @@ def get_features(
         Query(min_length=4, max_length=6),
     ] = None,
     datetime: str | None = None,
+    filter: Annotated[str | None, Query()] = None,
+    filter_lang: Annotated[FilterLang, Query(alias="filter-lang")] = FilterLang.CQL2_TEXT,
+    filter_crs: Annotated[CRS84 | None, Query(alias="filter-crs")] = None,
     service: StacApiService = Depends(get_item_service),
 ) -> Response:
     """Return collection items matching the supplied filters."""
+
     _validate_datetime(datetime)
+    expression = _get_filter(filter, filter_lang)
     search_result: ItemCollection | None = None
 
     try:
-        search_result = service.get_features(
-            collection_id,
-            limit,
-            bbox,
-            datetime,
-        )
+        search_result = service.get_features(collection_id, limit, bbox, datetime, expression)
     except Exception as e:
         raise _server_error(
             f"An error occurred when getting Features from Collection {collection_id} with criteria: limit={limit}, bbox={bbox}, datetime={datetime}: {e}"
@@ -336,6 +394,7 @@ def _item_search(
     limit: int | None,
     ids: list[str] | None,
     collections: list[str] | None,
+    filter: str | dict[str, object] | bool | None,
     *,
     service: StacApiService,
 ) -> Response:
@@ -344,18 +403,65 @@ def _item_search(
     search_result: ItemCollection | None = None
 
     try:
-        search_result = service.get_item_search(bbox, intersects, datetime, limit, ids, collections)
+        search_result = service.get_item_search(
+            bbox, intersects, datetime, limit, ids, collections, filter
+        )
     except Exception as e:
         raise _server_error(
-            f"An error occurred when searching with criteria: bbox={bbox}, intersects={intersects}, datetime={datetime}, limit={limit}, ids={ids}, collections={collections}: {e}"
+            f"An error occurred when searching with criteria: bbox={bbox}, intersects={intersects}, datetime={datetime}, limit={limit}, ids={ids}, collections={collections}, filter={filter}: {e}"
         ) from e
 
     if search_result is not None:
         return JSONResponse(content=search_result.to_dict())
 
     raise _not_found(
-        f"Searching with criteria: bbox={bbox}, intersects={intersects}, datetime={datetime}, limit={limit}, ids={ids}, collections={collections} did not produce any result"
+        f"Searching with criteria: bbox={bbox}, intersects={intersects}, datetime={datetime}, limit={limit}, ids={ids}, collections={collections}, filter={filter} did not produce any result"
     )
+
+
+@app.get(
+    "/queryables",
+    response_class=Response,
+    responses={
+        "200": {"content": {"application/schema+json": {}}},
+        "default": {"model": StacException},
+    },
+    tags=["Filter Extension"],
+)
+def get_queryables(request: Request) -> Response:
+    """Return the shared queryables schema identified by the requested URL."""
+    schema = json.loads(files("stac_api_protocol").joinpath("queryables.json").read_text("utf-8"))
+    schema["$id"] = str(request.url.replace(query=""))
+    return JSONResponse(content=schema, media_type="application/schema+json")
+
+
+@app.get(
+    "/collections/{collectionId}/queryables",
+    response_class=Response,
+    responses={
+        "200": {"content": {"application/schema+json": {}}},
+        "default": {"model": StacException},
+    },
+    tags=["Filter Extension"],
+)
+def get_collection_queryables(
+    request: Request,
+    collection_id: str = Path(..., alias="collectionId"),
+    service: StacApiService = Depends(get_item_service),
+) -> Response:
+    """Return the shared queryables schema for an existing collection.
+
+    Raises:
+        HTTPException: With status 404 if the collection does not exist, or
+            status 500 if the provider cannot retrieve collection metadata.
+    """
+    try:
+        collection = service.describe_collection(collection_id)
+    except Exception as error:
+        raise _server_error("Unable to retrieve collection metadata") from error
+    if collection is None:
+        raise _not_found(f"Collection {collection_id} does not exist in this Catalogue")
+    return get_queryables(request)
 
 
 def _parse_intersects(value: str | None) -> GeometryGeoJSON | GeometryCollection | None:
@@ -397,6 +503,9 @@ def get_item_search(
     limit: Annotated[int | None, Query(ge=1, le=10000)] = 10,
     ids: list[str] | None = Query(None),
     collections: list[str] | None = Query(None),
+    filter: Annotated[str | None, Query()] = None,
+    filter_lang: Annotated[FilterLang, Query(alias="filter-lang")] = FilterLang.CQL2_TEXT,
+    filter_crs: Annotated[CRS84 | None, Query(alias="filter-crs")] = None,
     *,
     service: StacApiService = Depends(get_item_service),
 ) -> Response:
@@ -408,6 +517,7 @@ def get_item_search(
         limit,
         ids,
         collections,
+        _get_filter(filter, filter_lang),
         service=service,
     )
 
@@ -431,5 +541,6 @@ def post_item_search(
         body.limit,
         body.ids,
         body.collections,
+        _get_filter(body.filter, body.filter_lang),
         service=service,
     )

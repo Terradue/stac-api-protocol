@@ -16,5 +16,36 @@ limitations under the License.
 
 # Reference
 
+Adopters provide the application behavior by implementing `StacApiService`, the
+service port defined in `src/stac_api_protocol/stac_service.py`. Your service
+connects catalogue operations to your domain logic, storage, and search systems.
+This package supplies the routes, request validation, response serialization,
+and HTTP error handling.
+
+## Integration at a glance
+
+1. Subclass `StacApiService` and implement its five abstract catalogue operations.
+2. Expose a callable factory that returns your service implementation.
+3. Register that factory in your package's `pyproject.toml`:
+
+   ```toml
+   [project.entry-points."stacapi.service"]
+   item_service = "my_catalogue.provider:create_service"
+   ```
+
+4. Install your package alongside `stac-api-protocol`, then serve
+   `stac_api_protocol.main:app` with an ASGI server.
+
+The entry-point group **`stacapi.service`** and entry name **`item_service`** are
+required. The module and factory names on the right-hand side are yours to choose.
+Exactly one installed provider must match. Installing this HTTP adapter alone
+does not supply a catalogue backend.
+
+## One application, multiple interchangeable providers
+
+The protocol defines a `StacApiService` contract, while implementations provide the actual catalogue behavior. The service factory is registered using Python entry points, so the HTTP application can remain independent of the provider implementation. 
+
+For example, the same application could be deployed with different providers and the application itself does not need to know which implementation is deployed.
+
 [Service contract](api.md) documents the `StacApiService` operations, their HTTP
 routes, result semantics, and provider discovery.

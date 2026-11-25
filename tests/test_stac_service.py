@@ -16,8 +16,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-from fastapi import Request
 from pystac import ItemCollection
 
 from stac_api_protocol.models import Collections
@@ -39,7 +37,12 @@ class EmptyCatalogueService(StacApiService):
         return None
 
     def get_features(
-        self, collection_id: str, limit: int | None, bbox: list[float] | None, datetime: str | None
+        self,
+        collection_id: str,
+        limit: int | None,
+        bbox: list[float] | None,
+        datetime: str | None,
+        filter: str | dict[str, object] | bool | None,
     ) -> ItemCollection | None:
         """Report that no collection exists."""
         return None
@@ -53,31 +56,20 @@ class EmptyCatalogueService(StacApiService):
         return ItemCollection([])
 
 
-@pytest.mark.parametrize("path", ["/", "/stac/", "/stac"])
-def test_landing_page_uses_request_root_without_query_string(path: str) -> None:
+def test_landing_page_uses_root_relative_links() -> None:
     service = EmptyCatalogueService(id="catalogue", title="Example", description="Example data")
-    request = Request(
-        {
-            "type": "http",
-            "scheme": "https",
-            "server": ("example.org", 8443),
-            "path": path,
-            "query_string": b"tracking=value",
-            "headers": [],
-        }
-    )
-    page = service.get_landing_page(request)
-    base_url = f"https://example.org:8443{path.rstrip('/')}"
+    page = service.get_landing_page()
 
     assert page.id == "catalogue"
     assert page.title == "Example"
     assert page.description == "Example data"
     assert {link.rel: link.get_href() for link in page.links} == {
-        "root": f"{base_url}/",
-        "self": f"{base_url}/",
-        "data": f"{base_url}/collections",
-        "conformance": f"{base_url}/conformance",
-        "search": f"{base_url}/search",
+        "root": "/",
+        "self": "/",
+        "data": "/collections",
+        "conformance": "/conformance",
+        "search": "/search",
+        "http://www.opengis.net/def/rel/ogc/1.0/queryables": "/queryables",
     }
     assert page.to_dict()["conformsTo"] == service.get_conformance_declaration().conforms_to
 
@@ -85,10 +77,22 @@ def test_landing_page_uses_request_root_without_query_string(path: str) -> None:
 def test_conformance_returns_fresh_fixed_declarations() -> None:
     service = EmptyCatalogueService("catalogue", "Example", "Example data")
     expected = [
+        "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
+        "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
+        "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
+        "http://www.opengis.net/spec/ogcapi_common-2/1.0/conf/collections",
         "https://api.stacspec.org/v1.0.0/core",
         "https://api.stacspec.org/v1.0.0/item-search",
         "https://api.stacspec.org/v1.0.0/collections",
         "https://api.stacspec.org/v1.0.0/ogcapi-features",
+        "https://api.stacspec.org/v1.0.0/item-search#filter",
+        "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/filter",
+        "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/features-filter",
+        "http://www.opengis.net/spec/cql2/1.0/conf/cql2-text",
+        "http://www.opengis.net/spec/cql2/1.0/conf/cql2-json",
+        "http://www.opengis.net/spec/cql2/1.0/conf/basic-cql2",
+        "http://www.opengis.net/spec/cql2/1.0/conf/basic-spatial-functions",
+        "http://www.opengis.net/spec/cql2/1.0/conf/advanced-comparison-operators",
     ]
     assert service.get_conformance_declaration().conforms_to == expected
     service.get_conformance_declaration().conforms_to.clear()
@@ -97,10 +101,9 @@ def test_conformance_returns_fresh_fixed_declarations() -> None:
 
 def test_landing_page_returns_independent_metadata() -> None:
     service = EmptyCatalogueService("catalogue", "Example", "Example data")
-    request = Request({"type": "http", "scheme": "https", "path": "/", "headers": []})
-    page = service.get_landing_page(request)
-    original = service.get_landing_page(request).to_dict()
+    page = service.get_landing_page()
+    original = service.get_landing_page().to_dict()
     page.conforms_to.clear()
     page.links.clear()
     page.description = "Changed"
-    assert service.get_landing_page(request).to_dict() == original
+    assert service.get_landing_page().to_dict() == original

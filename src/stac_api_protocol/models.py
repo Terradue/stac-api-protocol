@@ -18,10 +18,48 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+from enum import Enum
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer
+import cql2json_pydantic as cql2
+from pydantic import BaseModel, ConfigDict, Field, RootModel, field_serializer
 from pystac import Catalog, Collection, Link
+
+CRS84 = Literal["http://www.opengis.net/def/crs/OGC/1.3/CRS84"]
+
+
+class FilterLang(Enum):
+    """
+    The CQL2 filter encoding that the 'filter' value uses.
+
+    """
+
+    CQL2_TEXT = "cql2-text"
+    CQL2_JSON = "cql2-json"
+
+
+class Cql2Expression(
+    RootModel[
+        cql2.AndOrExpression
+        | cql2.NotExpression
+        | cql2.ComparisonPredicate
+        | cql2.SpatialPredicate
+        | cql2.TemporalPredicate
+        | cql2.ArrayPredicate
+        | cql2.FunctionRef
+        | bool
+    ]
+):
+    root: (
+        cql2.AndOrExpression
+        | cql2.NotExpression
+        | cql2.ComparisonPredicate
+        | cql2.SpatialPredicate
+        | cql2.TemporalPredicate
+        | cql2.ArrayPredicate
+        | cql2.FunctionRef
+        | bool
+    )
 
 
 class ConformanceClasses(BaseModel):
@@ -184,4 +222,10 @@ class SearchBody(
     model_config = ConfigDict(
         extra="allow",
         populate_by_name=True,
+    )
+
+    filter: str | Cql2Expression | None = None
+    filter_lang: FilterLang = Field(default=FilterLang.CQL2_JSON, alias="filter-lang")
+    filter_crs: CRS84 | None = Field(
+        default="http://www.opengis.net/def/crs/OGC/1.3/CRS84", alias="filter-crs"
     )

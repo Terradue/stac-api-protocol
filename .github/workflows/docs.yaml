@@ -48,4 +48,5 @@ jobs:
         legacy-cgi==2.6.4
         "mkdocstrings[python]==1.0.8"
         mkdocs-build-plantuml-plugin==2.1.0
+        six==1.17.0
     - run: mkdocs gh-deploy --force
