@@ -29,11 +29,12 @@ between the HTTP adapter and an adopter's catalogue application. It is an abstra
 two final metadata methods. Adopters subclass it and supply a catalogue identifier,
 title, and description. Incomplete subclasses cannot be instantiated.
 
-The shared landing-page method receives a FastAPI `Request` to derive public
-links. This is an HTTP coupling in the current service contract; catalogue search
+The shared landing-page method builds root-relative links. Catalogue search
 and retrieval operations remain independent of FastAPI request objects. The
-conformance method returns a fixed declaration of the four bundled STAC API
-classes, which each adopter must implement.
+conformance method returns a fixed declaration of the bundled STAC and OGC
+classes, including Filter Extension capabilities since version 0.2.0. The adapter
+handles the Filter protocol; each adopter must implement the advertised filtering
+semantics. See the [service contract](../reference/api.md#filter-extension-support-since-020).
 
 ```text
 HTTP client
@@ -67,7 +68,7 @@ implementation at runtime through an installed Python entry point.
 | Provider factory | Construct or obtain a configured service and supply it to the HTTP adapter. |
 
 Keep FastAPI responses and dependency injection out of your catalogue business
-logic. Apart from the shared landing-page method, service methods receive ordinary
+logic. Service methods receive ordinary
 filter values and return the
 STAC objects specified by the port. If your domain uses different objects, map
 them to these types at the service boundary. The port intentionally uses PySTAC,

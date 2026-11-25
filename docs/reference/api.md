@@ -22,26 +22,53 @@ methods with parsed filter values. All seven operations belong to the same
 registered `item_service` provider.
 
 The constructor requires `id`, `title`, and `description`. Five catalogue operations
-are abstract. `get_landing_page(request)` and `get_conformance_declaration()` are
-final concrete methods and must not be overridden. The landing page derives its
-links from the request URL without query parameters. Both responses advertise the
-four bundled STAC API classes: Core, Item Search, Collections, and OGC API Features.
+are abstract. `get_landing_page()` and `get_conformance_declaration()` are
+final concrete methods and must not be overridden. The landing page uses
+root-relative links. Both responses advertise the bundled STAC and OGC
+conformance classes, including Filter Extension capabilities since version 0.2.0.
 
 ## Operations and routes
 
 | HTTP route | Service method | Return type |
 | --- | --- | --- |
-| `GET /` | `get_landing_page(request)` | `LandingPage` |
+| `GET /` | `get_landing_page()` | `LandingPage` |
 | `GET /collections` | `get_collections()` | `Collections` |
 | `GET /collections/{collectionId}` | `describe_collection(collection_id)` | `pystac.Collection` or `None` |
-| `GET /collections/{collectionId}/items` | `get_features(collection_id, limit, bbox, datetime)` | `pystac.ItemCollection` or `None` |
+| `GET /collections/{collectionId}/items` | `get_features(collection_id, limit, bbox, datetime, filter)` | `pystac.ItemCollection` or `None` |
 | `GET /collections/{collectionId}/items/{featureId}` | `get_feature(collection_id, feature_id)` | `pystac.Item` or `None` |
 | `GET /conformance` | `get_conformance_declaration()` | `ConformanceClasses` |
-| `GET /search`, `POST /search` | `get_item_search(bbox, intersects, datetime, limit, ids, collections)` | `pystac.ItemCollection` or `None` |
+| `GET /search`, `POST /search` | `get_item_search(bbox, intersects, datetime, limit, ids, collections, filter)` | `pystac.ItemCollection` or `None` |
+| `GET /queryables` | Served by the HTTP adapter | JSON Schema (`application/schema+json`) |
+| `GET /collections/{collectionId}/queryables` | Adapter checks `describe_collection(collection_id)` | JSON Schema (`application/schema+json`) |
 
 `LandingPage`, `Collections`, and `ConformanceClasses` come from
 `stac_api_protocol.models`. Use these existing types rather than creating
 parallel representations of the HTTP contract.
+
+## Filter Extension support since 0.2.0
+
+**Version 0.2.0 introduced protocol-level support for the
+[STAC API - Filter Extension Specification v1.0.0-rc.4](https://github.com/stac-api-extensions/filter/blob/v1.0.0-rc.4/README.md).**
+
+| Request | Filter representation | Default `filter-lang` |
+| --- | --- | --- |
+| `GET /search` and `GET /collections/{collectionId}/items` | `filter` query parameter containing CQL2 Text or JSON-encoded CQL2 JSON | `cql2-text` |
+| `POST /search` | `filter` JSON body field containing a CQL2 JSON expression or a CQL2 Text string | `cql2-json` |
+
+Use `filter-lang` to select `cql2-text` or `cql2-json`. The supported `filter-crs`
+is `http://www.opengis.net/def/crs/OGC/1.3/CRS84`. Queryables are exposed at both
+catalogue and collection scope, with discovery links in the landing page and
+collection metadata. Collection queryables return HTTP 404 for an unknown collection.
+
+The adapter validates CQL2 JSON structure and delegates the expression to the
+provider. CQL2 Text is forwarded unchanged. Since 0.2.0, provider implementations
+of `get_features` and `get_item_search` must accept a `filter` argument typed as
+`str | dict[str, object] | bool | None`: text, a parsed JSON expression, a boolean
+predicate, or no filter. These argument types require no Pydantic import.
+
+Providers are responsible for evaluating expressions, combining them with other
+search constraints, and fulfilling the advertised conformance classes. Protocol
+support and protocol tests do not certify a backend's filtering behavior.
 
 ## Filter and result semantics
 

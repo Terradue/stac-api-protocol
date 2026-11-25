@@ -23,6 +23,13 @@ limitations under the License.
 
 A Python FastAPI HTTP adapter for STAC API Core, Item Search, Features and Collections.
 
+**Since version 0.2.0, the protocol implementation supports the
+[STAC API - Filter Extension Specification v1.0.0-rc.4](https://github.com/stac-api-extensions/filter/blob/v1.0.0-rc.4/README.md).**
+This includes CQL2 Text and CQL2 JSON request handling, queryables discovery, and
+Filter conformance declarations. Evaluating filters against catalogue data remains
+the service provider's responsibility. See the
+[Filter Extension service contract](docs/reference/api.md#filter-extension-support-since-020).
+
 ## Project conventions
 
 This project is templated a Hatch-based Python package with:
