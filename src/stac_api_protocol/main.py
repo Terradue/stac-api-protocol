@@ -32,7 +32,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from geojson import GeometryCollection, loads
 from geojson.geometry import Geometry as GeometryGeoJSON
-from pydantic import AfterValidator, BeforeValidator
+from pydantic import AfterValidator, BeforeValidator, ValidationError
 from pystac import Collection, Link
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -273,25 +273,31 @@ def _validate_bbox_coordinates(bbox: list[float] | None) -> list[float] | None:
 
 
 def _get_filter(
-    filter: str | Cql2Expression | None,
+    filter_value: str | Cql2Expression | None,
     filter_lang: FilterLang,
-) -> str | dict | None:
-    if not filter:
+) -> str | dict[str, object] | bool | None:
+    """Decode CQL2 JSON or preserve CQL2 text for the provider.
+
+    Raises:
+        HTTPException: With status 400 if the encoded JSON expression is invalid.
+    """
+    if filter_value is None:
         return None
 
-    if isinstance(filter, str):
+    if isinstance(filter_value, str):
         if filter_lang == FilterLang.CQL2_TEXT:
-            return filter
+            return filter_value
 
         try:
-            filter = Cql2Expression.model_validate_json(filter)
-        except Exception as e:
-            raise StarletteHTTPException(
+            filter_value = Cql2Expression.model_validate_json(filter_value)
+        except ValidationError as error:
+            raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Input filter '{filter}' is not a valid 'cql2-json' syntax",
-            ) from e
+                detail="Input filter is not a valid 'cql2-json' expression",
+            ) from error
 
-    return filter.model_dump(mode="json")
+    expression: dict[str, object] | bool = filter_value.model_dump(mode="json")
+    return expression
 
 
 @app.get(
@@ -317,12 +323,11 @@ def get_features(
     """Return collection items matching the supplied filters."""
 
     _validate_datetime(datetime)
+    expression = _get_filter(filter, filter_lang)
     search_result: ItemCollection | None = None
 
     try:
-        search_result = service.get_features(
-            collection_id, limit, bbox, datetime, _get_filter(filter, filter_lang)
-        )
+        search_result = service.get_features(collection_id, limit, bbox, datetime, expression)
     except Exception as e:
         raise _server_error(
             f"An error occurred when getting Features from Collection {collection_id} with criteria: limit={limit}, bbox={bbox}, datetime={datetime}: {e}"
@@ -389,7 +394,7 @@ def _item_search(
     limit: int | None,
     ids: list[str] | None,
     collections: list[str] | None,
-    filter: str | dict | None,
+    filter: str | dict[str, object] | bool | None,
     *,
     service: StacApiService,
 ) -> Response:

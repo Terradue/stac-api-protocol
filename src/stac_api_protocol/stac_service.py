@@ -90,7 +90,7 @@ class StacApiService(ABC):
         limit: int | None,
         bbox: list[float] | None,
         datetime: str | None,
-        filter: str | dict | None,
+        filter: str | dict[str, object] | bool | None,
     ) -> ItemCollection | None:
         """Return matching items, an empty result, or None for an unavailable resource."""
 
@@ -132,6 +132,6 @@ class StacApiService(ABC):
         limit: int | None,
         ids: list[str] | None,
         collections: list[str] | None,
-        filter: str | dict | None,
+        filter: str | dict[str, object] | bool | None,
     ) -> ItemCollection | None:
         """Return matching items, an empty result, or None for an unavailable resource."""

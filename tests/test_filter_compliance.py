@@ -268,7 +268,9 @@ def test_filter_is_combined_with_standard_search_constraints(
 
 
 @pytest.mark.parametrize("path", ["/search", "/collections/sentinel/items"])
-@pytest.mark.parametrize("expression", ["{", '{"op":"unknown","args":[]}', '{"op":"="}'])
+@pytest.mark.parametrize(
+    "expression", ["", "{", '{"op":1,"args":[]}', '{"op":"="}', '{"op":"=","args":null}']
+)
 def test_malformed_cql2_json_get_returns_bad_request(
     filter_app: FastAPI, service: Mock, path: str, expression: str
 ) -> None:
@@ -435,3 +437,43 @@ def test_queryables_openapi_advertises_schema_media_type(api: ModuleType) -> Non
     for path in ("/queryables", "/collections/{collectionId}/queryables"):
         response = api.app.openapi()["paths"][path]["get"]["responses"]["200"]
         assert set(response["content"]) == {"application/schema+json"}
+
+
+@pytest.mark.parametrize("method", ["GET", "POST"])
+@pytest.mark.parametrize(
+    "expression",
+    [True, False, {"op": "custom_function", "args": []}],
+)
+def test_boolean_and_custom_function_expressions_reach_provider(
+    filter_app: FastAPI, service: Mock, method: str, expression: JsonValue
+) -> None:
+    # CQL2 functionRef permits arbitrary non-reserved names; the provider determines support.
+    fields: dict[str, JsonValue] = {
+        "filter": json.dumps(expression) if method == "GET" else expression,
+        "filter-lang": "cql2-json",
+    }
+    status, _, _ = asyncio.run(_request(filter_app, method, "/search", fields))
+    assert status == HTTPStatus.OK
+    service.get_item_search.assert_called_once_with(None, None, None, 10, None, None, expression)
+
+
+@pytest.mark.parametrize("expression", ["", "{", '{"op":1,"args":[]}', '{"op":"="}'])
+def test_invalid_encoded_post_filter_returns_bad_request(
+    filter_app: FastAPI, service: Mock, expression: str
+) -> None:
+    status, body, _ = asyncio.run(
+        _request(filter_app, "POST", "/search", {"filter": expression, "filter-lang": "cql2-json"})
+    )
+    assert status == HTTPStatus.BAD_REQUEST
+    assert json.loads(body)["code"] == "400"
+    service.get_item_search.assert_not_called()
+
+
+@pytest.mark.parametrize("expression", [{"op": 1, "args": []}, {"op": "="}])
+def test_invalid_post_filter_object_is_rejected_before_provider_call(
+    filter_app: FastAPI, service: Mock, expression: JsonValue
+) -> None:
+    status, body, _ = asyncio.run(_request(filter_app, "POST", "/search", {"filter": expression}))
+    assert status == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert json.loads(body)["code"] == "422"
+    service.get_item_search.assert_not_called()
