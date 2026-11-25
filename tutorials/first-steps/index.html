@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://terradue.github.io/stac-api-protocol/tutorials/first-steps/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Build your first service - STAC API Protocol</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Build your first service";
+        var mkdocs_page_input_path = "tutorials/first-steps.md";
+        var mkdocs_page_url = "/stac-api-protocol/tutorials/first-steps/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> STAC API Protocol
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../">Overview</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Build your first service</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#1-create-an-adopter-package">1. Create an adopter package</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-implement-the-service-port">2. Implement the service port</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#3-install-and-serve">3. Install and serve</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#4-exercise-the-adapter">4. Exercise the adapter</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#5-connect-your-application">5. Connect your application</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">How-to guides</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../how-to/">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../how-to/install/">Install and run</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../how-to/register-service/">Register a service factory</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/api/">Service contract</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/openapi.html">Bundled OpenAPI</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Explanation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../explanation/">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../explanation/architecture/">Architecture</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">STAC API Protocol</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Tutorials</li>
+      <li class="breadcrumb-item active">Build your first service</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/Terradue/stac-api-protocol/edit/main/docs/tutorials/first-steps.md">Edit on stac-api-protocol</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <!--
+Copyright 2026 Terradue
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<h1 id="build-your-first-service">Build your first service<a class="headerlink" href="#build-your-first-service" title="Permanent link">&para;</a></h1>
+<p>This tutorial builds an empty catalogue provider. It demonstrates the five abstract operations of the
+service contract and factory discovery without requiring a database. An empty
+catalogue cannot demonstrate filtering or item retrieval; replace these methods
+with your own application logic when connecting real data.</p>
+<h2 id="1-create-an-adopter-package">1. Create an adopter package<a class="headerlink" href="#1-create-an-adopter-package" title="Permanent link">&para;</a></h2>
+<p>Create this layout in a separate directory:</p>
+<div class="highlight"><pre><span></span><code>my-catalogue/
+├── pyproject.toml
+└── src/
+    └── my_catalogue/
+        ├── __init__.py
+        └── provider.py
+</code></pre></div>
+<p>Leave <code>__init__.py</code> empty. Put the following in <code>pyproject.toml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[build-system]</span>
+<span class="n">requires</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"hatchling"</span><span class="p">]</span>
+<span class="n">build-backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"hatchling.build"</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"my-catalogue"</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.1.0"</span>
+<span class="n">requires-python</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"&gt;=3.11"</span>
+<span class="n">dependencies</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"stac-api-protocol"</span><span class="p">]</span>
+
+<span class="k">[project.entry-points.</span><span class="s2">"stacapi.service"</span><span class="k">]</span>
+<span class="n">item_service</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"my_catalogue.provider:create_service"</span>
+
+<span class="k">[tool.hatch.build.targets.wheel]</span>
+<span class="n">packages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"src/my_catalogue"</span><span class="p">]</span>
+</code></pre></div>
+<p>The entry point belongs to your adopter package. It tells the HTTP adapter where
+to find your factory once this package is installed.</p>
+<h2 id="2-implement-the-service-port">2. Implement the service port<a class="headerlink" href="#2-implement-the-service-port" title="Permanent link">&para;</a></h2>
+<p>Put this implementation in <code>src/my_catalogue/provider.py</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">geojson</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeometryCollection</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">geojson.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">Geometry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pystac</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Item</span><span class="p">,</span> <span class="n">ItemCollection</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">stac_api_protocol.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collections</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">stac_api_protocol.stac_service</span><span class="w"> </span><span class="kn">import</span> <span class="n">StacApiService</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EmptyCatalogueService</span><span class="p">(</span><span class="n">StacApiService</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Expose an empty catalogue to demonstrate the service boundary."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_collections</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Collections</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the catalogue's empty collection listing."""</span>
+        <span class="k">return</span> <span class="n">Collections</span><span class="p">(</span><span class="n">collections</span><span class="o">=</span><span class="p">[],</span> <span class="n">links</span><span class="o">=</span><span class="p">[])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe_collection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collection_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Collection</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Report that the requested collection does not exist."""</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_features</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">collection_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bbox</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">datetime</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ItemCollection</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Report that the requested collection does not exist."""</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_feature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collection_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">feature_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Item</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Report that the requested item does not exist."""</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_item_search</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">bbox</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">intersects</span><span class="p">:</span> <span class="n">Geometry</span> <span class="o">|</span> <span class="n">GeometryCollection</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">datetime</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">collections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ItemCollection</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a successful search with no matching items."""</span>
+        <span class="k">return</span> <span class="n">ItemCollection</span><span class="p">([])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">create_service</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">StacApiService</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Provide an empty catalogue service to the HTTP adapter."""</span>
+    <span class="k">return</span> <span class="n">EmptyCatalogueService</span><span class="p">(</span>
+        <span class="nb">id</span><span class="o">=</span><span class="s2">"empty-catalogue"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Empty catalogue"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"An empty demonstration catalogue"</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>The class specializes <code>StacApiService</code>; the factory returns it through the port.
+Neither needs to import FastAPI. All HTTP handling remains in the adapter.</p>
+<p>The base class supplies the final landing-page and conformance methods. It builds
+links from the incoming landing-page request and advertises the four bundled STAC
+API conformance classes. Adopters implement the other five abstract operations
+and must fulfill those advertised capabilities. This empty example demonstrates
+the integration mechanics; it is not a conformance certification.</p>
+<h2 id="3-install-and-serve">3. Install and serve<a class="headerlink" href="#3-install-and-serve" title="Permanent link">&para;</a></h2>
+<p>From <code>my-catalogue/</code>, create an environment and install your package and server:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>uvicorn
+python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>stac_api_protocol.main:app<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span>
+</code></pre></div>
+<p>Installation records the entry-point metadata. On application import, the adapter
+finds <code>item_service</code> in the <code>stacapi.service</code> group and loads <code>create_service</code>.
+FastAPI invokes the provider as a dependency when serving requests.</p>
+<h2 id="4-exercise-the-adapter">4. Exercise the adapter<a class="headerlink" href="#4-exercise-the-adapter" title="Permanent link">&para;</a></h2>
+<p>In another terminal:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>http://127.0.0.1:8000/
+curl<span class="w"> </span>http://127.0.0.1:8000/collections
+curl<span class="w"> </span>http://127.0.0.1:8000/search
+curl<span class="w"> </span>-i<span class="w"> </span>http://127.0.0.1:8000/collections/missing
+</code></pre></div>
+<p>Expect a catalogue landing page, an empty collection listing, an empty GeoJSON
+FeatureCollection, and an HTTP 404 for the missing collection. You can also try
+these requests in <code>http://127.0.0.1:8000/docs</code>.</p>
+<h2 id="5-connect-your-application">5. Connect your application<a class="headerlink" href="#5-connect-your-application" title="Permanent link">&para;</a></h2>
+<p>Replace <code>EmptyCatalogueService</code> with your concrete service implementation. Keep
+its method signatures compatible with the <a href="../../reference/api/">service contract</a>,
+apply the supplied filters in your application, and return the required STAC
+objects. Update the factory to construct your configured implementation. The HTTP
+adapter and its route definitions do not need to change.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../" class="btn btn-neutral float-left" title="Overview"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../how-to/" class="btn btn-neutral float-right" title="Overview">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/Terradue/stac-api-protocol" class="fa fa-code-fork" style="color: #fcfcfc"> stac-api-protocol</a>
+        </span>
+    
+    
+      <span><a href="../" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../how-to/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

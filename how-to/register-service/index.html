@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://terradue.github.io/stac-api-protocol/how-to/register-service/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Register a service factory - STAC API Protocol</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Register a service factory";
+        var mkdocs_page_input_path = "how-to/register-service.md";
+        var mkdocs_page_url = "/stac-api-protocol/how-to/register-service/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> STAC API Protocol
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/first-steps/">Build your first service</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">How-to guides</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../install/">Install and run</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Register a service factory</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#implement-the-port">Implement the port</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#export-the-factory">Export the factory</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#declare-the-entry-point">Declare the entry point</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#install-and-verify-discovery">Install and verify discovery</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#troubleshoot-startup">Troubleshoot startup</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/api/">Service contract</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/openapi.html">Bundled OpenAPI</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Explanation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../explanation/">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../explanation/architecture/">Architecture</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">STAC API Protocol</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">How-to guides</li>
+      <li class="breadcrumb-item active">Register a service factory</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/Terradue/stac-api-protocol/edit/main/docs/how-to/register-service.md">Edit on stac-api-protocol</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <!--
+Copyright 2026 Terradue
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<h1 id="register-a-service-factory">Register a service factory<a class="headerlink" href="#register-a-service-factory" title="Permanent link">&para;</a></h1>
+<h2 id="implement-the-port">Implement the port<a class="headerlink" href="#implement-the-port" title="Permanent link">&para;</a></h2>
+<p>Create a concrete implementation of <code>StacApiService</code> from
+<code>stac_api_protocol.stac_service</code>. Implement the five abstract methods in the
+<a href="../../reference/api/">service contract</a>, using your own application and backend
+logic. The <a href="../../tutorials/first-steps/">tutorial</a> provides a complete minimal
+example.</p>
+<h2 id="export-the-factory">Export the factory<a class="headerlink" href="#export-the-factory" title="Permanent link">&para;</a></h2>
+<p>In your adopter package, expose a callable that returns the configured service:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># my_catalogue/provider.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">stac_api_protocol.stac_service</span><span class="w"> </span><span class="kn">import</span> <span class="n">StacApiService</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.service</span><span class="w"> </span><span class="kn">import</span> <span class="n">CatalogueService</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">create_service</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">StacApiService</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Provide the catalogue implementation used by the HTTP adapter."""</span>
+    <span class="k">return</span> <span class="n">CatalogueService</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"catalogue"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Catalogue"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Catalogue data"</span><span class="p">)</span>
+</code></pre></div>
+<p>This example uses the base constructor, which requires catalogue identity metadata.
+Adapt construction to your application's configuration and resource lifecycle.
+The inherited landing-page method uses the incoming request; your five catalogue
+operations receive ordinary filter values.</p>
+<h2 id="declare-the-entry-point">Declare the entry point<a class="headerlink" href="#declare-the-entry-point" title="Permanent link">&para;</a></h2>
+<p>Add this table to the <strong>adopter package's</strong> <code>pyproject.toml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[project.entry-points.</span><span class="s2">"stacapi.service"</span><span class="k">]</span>
+<span class="n">item_service</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"my_catalogue.provider:create_service"</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>stacapi.service</code></td>
+<td>Entry-point group queried by this adapter.</td>
+</tr>
+<tr>
+<td><code>item_service</code></td>
+<td>Required entry name for the service covering all supported routes.</td>
+</tr>
+<tr>
+<td><code>my_catalogue.provider</code></td>
+<td>Importable module in your installed package.</td>
+</tr>
+<tr>
+<td><code>create_service</code></td>
+<td>Callable factory exported by that module.</td>
+</tr>
+</tbody>
+</table>
+<p>Use the callable's name without parentheses. Despite its name, <code>item_service</code>
+serves landing-page, collection, conformance, and item operations alike.</p>
+<h2 id="install-and-verify-discovery">Install and verify discovery<a class="headerlink" href="#install-and-verify-discovery" title="Permanent link">&para;</a></h2>
+<p>From your adopter project directory, install the package into the same environment
+that runs the ASGI server:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</code></pre></div>
+<p>Reinstall after changing entry-point metadata, and restart the server. Merely
+placing the module on <code>PYTHONPATH</code> does not install entry-point metadata.</p>
+<p>Inspect registrations without starting the application:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">entry_points</span>
+
+<span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entry_points</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="s2">"stacapi.service"</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"item_service"</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+</code></pre></div>
+<p>There must be exactly one match. Start the adapter only after installing it:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>stac_api_protocol.main:app<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span>
+</code></pre></div>
+<p>Install Uvicorn separately as described in <a href="../install/">Install and run</a>.</p>
+<h2 id="troubleshoot-startup">Troubleshoot startup<a class="headerlink" href="#troubleshoot-startup" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Failure</th>
+<th>What to check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Missing required dependency: item_service</code></td>
+<td>Install your provider in the server environment; check both the group and entry name.</td>
+</tr>
+<tr>
+<td><code>Multiple implementations found for: item_service</code></td>
+<td>Use an environment with only one matching provider registration. There is no automatic priority selection.</td>
+</tr>
+<tr>
+<td><code>Dependency is not callable: item_service</code></td>
+<td>Point at a factory function or another callable, rather than a prebuilt non-callable instance.</td>
+</tr>
+<tr>
+<td>Import failure while loading the entry point</td>
+<td>Check the module path and install your provider's runtime dependencies. Import errors propagate.</td>
+</tr>
+<tr>
+<td>Failure when a request invokes the service</td>
+<td>Check factory construction and whether the returned service implements the service contract. Discovery alone does not check these.</td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../install/" class="btn btn-neutral float-left" title="Install and run"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../reference/" class="btn btn-neutral float-right" title="Overview">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/Terradue/stac-api-protocol" class="fa fa-code-fork" style="color: #fcfcfc"> stac-api-protocol</a>
+        </span>
+    
+    
+      <span><a href="../install/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../reference/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

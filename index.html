@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="A Python FastAPI HTTP adapter for STAC API Core, Item Search, Features and Collections." /><link rel="canonical" href="https://terradue.github.io/stac-api-protocol/" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>STAC API Protocol</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Home";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = "/stac-api-protocol/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> STAC API Protocol
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Home</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#a-better-fit-for-federation-and-distributed-infrastructures">A better fit for federation and distributed infrastructures</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#main-advantages-of-stac-api-protocol">Main advantages of stac-api-protocol</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-clear-separation-of-concerns">1. Clear separation of concerns</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-backend-agnostic-by-design">2. Backend-agnostic by design</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-minimal-runtime-and-operational-footprint">3. Minimal runtime and operational footprint</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4-reuse-the-same-api-implementation">4. Reuse the same API implementation</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#5-pluggable-service-implementations">5. Pluggable service implementations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#6-no-forced-data-migration-or-duplication">6. No forced data migration or duplication</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#7-independent-lifecycle-and-deployment">7. Independent lifecycle and deployment</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#documentation">Documentation</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="tutorials/">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="tutorials/first-steps/">Build your first service</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">How-to guides</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="how-to/">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="how-to/install/">Install and run</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="how-to/register-service/">Register a service factory</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="reference/">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="reference/api/">Service contract</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="reference/openapi.html">Bundled OpenAPI</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Explanation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="explanation/">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="explanation/architecture/">Architecture</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">STAC API Protocol</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Home</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/Terradue/stac-api-protocol/edit/main/docs/index.md">Edit on stac-api-protocol</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <!--
+Copyright 2026 Terradue
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<h1 id="stac-api-protocol-a-lightweight-way-to-expose-existing-data">STAC API Protocol: A lightweight way to expose existing data<a class="headerlink" href="#stac-api-protocol-a-lightweight-way-to-expose-existing-data" title="Permanent link">&para;</a></h1>
+<p><strong>STAC API Protocol enables existing data systems to become interoperable STAC API services without requiring them to adopt a new catalogue infrastructure.</strong></p>
+<p><strong>Since version 0.2.0, the protocol implementation supports the
+<a href="https://github.com/stac-api-extensions/filter/blob/v1.0.0-rc.4/README.md">STAC API - Filter Extension Specification v1.0.0-rc.4</a>.</strong>
+The HTTP adapter handles CQL2 Text and CQL2 JSON requests, exposes queryables, and
+advertises Filter conformance. Service providers implement filter evaluation
+against their data. See the <a href="reference/api/#filter-extension-support-since-020">Filter Extension service contract</a>
+for supported routes and provider requirements.</p>
+<p>Built around a clean separation between the HTTP protocol layer for STAC API <em>Core</em>, <em>Collections</em>,
+<em>Features</em>, and <em>Item Search</em> and the underlying data services, it provides the essential STAC API functionality while leaving data access, metadata mapping, and catalogue operations to pluggable implementations.</p>
+<p>This makes it particularly suited to building lightweight STAC facades over heterogeneous data sources, from legacy catalogues and REST services to databases, object storage, and custom scientific data systems.</p>
+<p>Rather than introducing another catalogue to maintain, STAC API Protocol allows existing systems to expose their data through a common, standards-based interface.</p>
+<ul>
+<li><strong>Minimal footprint:</strong> Avoid unnecessary catalogue infrastructure, metadata duplication, and synchronization pipelines.</li>
+<li><strong>Backend agnostic:</strong> Integrate heterogeneous data sources without imposing a common storage technology.</li>
+<li><strong>Clean separation of concerns:</strong> Keep protocol handling independent from data access and business logic.</li>
+<li><strong>Reusable deployment:</strong> Maintain one API implementation while deploying different service providers.</li>
+<li><strong>Extensible integration:</strong> Adapt existing systems through small, dedicated service implementations.</li>
+<li><strong>Interoperability by design:</strong> Make existing data accessible through the STAC ecosystem with minimal architectural changes.</li>
+</ul>
+<p>STAC API Protocol is designed for situations where the challenge is not building another catalogue, but making existing data discoverable and accessible through a standard interface.</p>
+<p>Ddeveloped according to <strong>Hexagonal Architecture
+(Ports and Adapters)</strong> and the separation of concerns associated with <strong>Clean
+Architecture</strong>: <strong>FastAPI acts exclusively as the HTTP adapter</strong>, separating the
+STAC API protocol layer from the underlying data access and implementation logic.</p>
+<p><img alt="Architecture" src="diagrams/architecture.svg" /></p>
+<p>Each source can have its own:</p>
+<ul>
+<li>Data model</li>
+<li>Metadata representation</li>
+<li>Query mechanism</li>
+<li>Identifier scheme</li>
+<li>Asset location</li>
+<li>Authentication mechanism</li>
+<li>Search capabilities and limitations</li>
+</ul>
+<p>The facade only needs to translate these capabilities into the STAC API contract.</p>
+<p>The provider is discovered through a fixed entry-point contract, and the deployed environment supplies the implementation.</p>
+<p>This brings some important practical benefits:</p>
+<ul>
+<li>No environment-specific forks of the API application.</li>
+<li>No backend-specific logic in the protocol layer.</li>
+<li>Simpler deployment packaging because the provider can be a separate Python distribution.</li>
+<li>Better maintainability because protocol upgrades and data-source implementations evolve independently.</li>
+<li>Reuse across organizations and infrastructures, even when the underlying systems differ substantially.</li>
+</ul>
+<p>This is particularly compelling for organizations operating several data platforms with different technologies, interfaces, or metadata schemas.</p>
+<p>This makes <code>stac-api-protocol</code> particularly useful when the objective is to wrap existing data services, not build another centralized metadata database.</p>
+<h2 id="a-better-fit-for-federation-and-distributed-infrastructures">A better fit for federation and distributed infrastructures<a class="headerlink" href="#a-better-fit-for-federation-and-distributed-infrastructures" title="Permanent link">&para;</a></h2>
+<p>This architecture also aligns naturally with distributed catalogue environments.</p>
+<p>Instead of forcing every data provider to consolidate its metadata into a central catalogue, each provider can expose its own STAC API facade. A higher-level discovery service can then federate or aggregate those interfaces.</p>
+<p>This allows you to preserve:</p>
+<ul>
+<li>Data sovereignty;</li>
+<li>Existing operational boundaries;</li>
+<li>Local access control policies;</li>
+<li>Technology diversity;</li>
+<li>Independent provider evolution.</li>
+</ul>
+<p>The STAC API becomes the common language between systems, rather than a requirement for all systems to share a common implementation.</p>
+<p>For distributed infrastructures, this is often a more natural model than centralizing metadata ownership.</p>
+<p><code>stac-fastapi</code> is probably a good choice when:</p>
+<ul>
+<li>Your data already exists elsewhere.</li>
+<li>The source already provides some discovery or query capabilities.</li>
+<li>You want to avoid duplicating metadata.</li>
+<li>You need to map different data models into STAC.</li>
+<li>You want the smallest possible implementation between your data and STAC clients.</li>
+<li>You want a single reusable API deployment with interchangeable service providers.</li>
+</ul>
+<p>Its modularity and extension ecosystem are real advantages.</p>
+<h2 id="main-advantages-of-stac-api-protocol">Main advantages of <code>stac-api-protocol</code><a class="headerlink" href="#main-advantages-of-stac-api-protocol" title="Permanent link">&para;</a></h2>
+<p>There are architectural benefits of adopting the protocol/service separation:</p>
+<h3 id="1-clear-separation-of-concerns">1. Clear separation of concerns<a class="headerlink" href="#1-clear-separation-of-concerns" title="Permanent link">&para;</a></h3>
+<p>The protocol layer owns HTTP, routing, request validation, serialization, and protocol-level errors. The implementation owns data access, query translation, metadata mapping, and domain logic.</p>
+<h3 id="2-backend-agnostic-by-design">2. Backend-agnostic by design<a class="headerlink" href="#2-backend-agnostic-by-design" title="Permanent link">&para;</a></h3>
+<p>You are not required to adopt a specific storage technology or catalogue database. Existing systems remain the source of truth; STAC is the interoperability layer placed on top of them.</p>
+<h3 id="3-minimal-runtime-and-operational-footprint">3. Minimal runtime and operational footprint<a class="headerlink" href="#3-minimal-runtime-and-operational-footprint" title="Permanent link">&para;</a></h3>
+<p>A facade can avoid deploying and maintaining a dedicated STAC metadata database, ingestion pipeline, synchronization jobs, and indexing infrastructure when the underlying source already provides the information required.</p>
+<h3 id="4-reuse-the-same-api-implementation">4. Reuse the same API implementation<a class="headerlink" href="#4-reuse-the-same-api-implementation" title="Permanent link">&para;</a></h3>
+<p>The HTTP and STAC implementation can be reused across multiple deployments. Only the source-specific service implementation changes.</p>
+<h3 id="5-pluggable-service-implementations">5. Pluggable service implementations<a class="headerlink" href="#5-pluggable-service-implementations" title="Permanent link">&para;</a></h3>
+<p>Backend implementations can be installed independently and discovered at runtime, avoiding the need to fork or modify the API application for each deployment.</p>
+<h3 id="6-no-forced-data-migration-or-duplication">6. No forced data migration or duplication<a class="headerlink" href="#6-no-forced-data-migration-or-duplication" title="Permanent link">&para;</a></h3>
+<p>Metadata can be mapped on demand from the source system into STAC representations, reducing synchronization problems and the risk of maintaining multiple versions of the same catalogue information.</p>
+<h3 id="7-independent-lifecycle-and-deployment">7. Independent lifecycle and deployment<a class="headerlink" href="#7-independent-lifecycle-and-deployment" title="Permanent link">&para;</a></h3>
+<p>The facade can be deployed, upgraded, or replaced independently from the data source. It does not need to become the owner of the source's data or lifecycle.</p>
+<h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="tutorials/first-steps/">First service tutorial</a>: build and run a minimal provider.</li>
+<li><a href="how-to/register-service/">Register a service factory</a>: configure discovery and troubleshoot startup.</li>
+<li><a href="how-to/install/">Install and run</a>: prepare the runtime environment.</li>
+<li><a href="reference/api/">Service contract</a>: methods, return values, and HTTP behavior.</li>
+<li><a href="explanation/architecture/">Architecture</a>: understand the adapter boundary and dependency direction.</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="tutorials/" class="btn btn-neutral float-right" title="Overview">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/Terradue/stac-api-protocol" class="fa fa-code-fork" style="color: #fcfcfc"> stac-api-protocol</a>
+        </span>
+    
+    
+    
+      <span><a href="tutorials/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.6.1
+Build Date UTC : 2026-11-25 16:27:21.073812+00:00
+-->
