@@ -285,7 +285,7 @@ def get_features(
         Query(min_length=4, max_length=6),
     ] = None,
     datetime: str | None = None,
-    filter: str | Cql2Expression | None = Query(None),
+    filter: Annotated[str | None, Query()] = None,
     filter_lang: Annotated[FilterLang, Query(alias="filter-lang")] = FilterLang.CQL2_TEXT,
     filter_crs: Annotated[CRS84 | None, Query(alias="filter-crs")] = None,
     service: StacApiService = Depends(get_item_service),
@@ -396,7 +396,7 @@ def _item_search(
 
 @app.get(
     '/queryables',
-    responses={'default': {'model': Exception}},
+    responses={'default': {'model': StacException}},
     tags=['Filter Extension'],
 )
 def get_queryables() -> Response:
