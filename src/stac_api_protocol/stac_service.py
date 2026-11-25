@@ -64,6 +64,7 @@ class StacApiService(ABC):
         landing_page.add_link(Link("data", "/collections"))
         landing_page.add_link(Link("conformance", "/conformance"))
         landing_page.add_link(Link("search", "/search"))
+        landing_page.add_link(Link("queryables", "/queryables"))
 
         landing_page.conforms_to = self.get_conformance_declaration().conforms_to
         return landing_page
@@ -78,7 +79,12 @@ class StacApiService(ABC):
 
     @abstractmethod
     def get_features(
-        self, collection_id: str, limit: int | None, bbox: list[float] | None, datetime: str | None
+        self,
+        collection_id: str,
+        limit: int | None,
+        bbox: list[float] | None,
+        datetime: str | None,
+        filter: str | dict | None,
     ) -> ItemCollection | None:
         """Return matching items, an empty result, or None for an unavailable resource."""
 
@@ -94,10 +100,23 @@ class StacApiService(ABC):
         """
         return ConformanceClasses(
             conforms_to=[
-                "https://api.stacspec.org/v1.0.0/core",
-                "https://api.stacspec.org/v1.0.0/item-search",
-                "https://api.stacspec.org/v1.0.0/collections",
-                "https://api.stacspec.org/v1.0.0/ogcapi-features",
+                "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
+                "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
+                "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
+
+                "http://www.opengis.net/spec/ogcapi_common-2/1.0/conf/collections",
+
+                "http://api.stacspec.org/v1.0.0/core",
+                "http://api.stacspec.org/v1.0.0/item-search",
+
+                "https://api.stacspec.org/v1.0.0/item-search#filter"
+                "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/filter",
+                "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/features-filter",
+                "http://www.opengis.net/spec/cql2/1.0/conf/cql2-text",
+                "http://www.opengis.net/spec/cql2/1.0/conf/cql2-json",
+                "http://www.opengis.net/spec/cql2/1.0/conf/basic-cql2",
+                "http://www.opengis.net/spec/cql2/1.0/conf/basic-spatial-functions",
+                "http://www.opengis.net/spec/cql2/1.0/conf/advanced-comparison-operators"
             ]
         )
 
@@ -110,5 +129,6 @@ class StacApiService(ABC):
         limit: int | None,
         ids: list[str] | None,
         collections: list[str] | None,
+        filter: str | dict | None,
     ) -> ItemCollection | None:
         """Return matching items, an empty result, or None for an unavailable resource."""

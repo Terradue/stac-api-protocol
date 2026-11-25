@@ -35,7 +35,15 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 if TYPE_CHECKING:
     from pystac import Collection, Item, ItemCollection
 
-from .models import Collections, ConformanceClasses, LandingPage, SearchBody
+from .models import (
+    CRS84,
+    Collections,
+    ConformanceClasses,
+    Cql2Expression,
+    FilterLang,
+    LandingPage,
+    SearchBody,
+)
 from .models import Exception as StacException
 from .plugin_loader import load_dependency
 from .stac_service import StacApiService
@@ -240,6 +248,28 @@ def _validate_bbox_coordinates(bbox: list[float] | None) -> list[float] | None:
     return bbox
 
 
+def _get_filter(
+    filter: str | Cql2Expression | None,
+    filter_lang: FilterLang,
+) -> str | dict | None:
+    if not filter:
+        return None
+    
+    if isinstance(filter, str):
+        if filter_lang == FilterLang.CQL2_TEXT:
+            return filter
+
+        try:
+            filter = Cql2Expression.model_validate_json(filter)
+        except Exception as e:
+            raise StarletteHTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Input filter '{filter}' is not a valid 'cql2-json' syntax",
+            ) from e
+
+    return filter.model_dump(mode="json")
+
+
 @app.get(
     "/collections/{collectionId}/items",
     responses={"4XX": {"model": StacException}, "5XX": {"model": StacException}},
@@ -255,9 +285,13 @@ def get_features(
         Query(min_length=4, max_length=6),
     ] = None,
     datetime: str | None = None,
+    filter: str | Cql2Expression | None = Query(None),
+    filter_lang: Annotated[FilterLang, Query(alias="filter-lang")] = FilterLang.CQL2_TEXT,
+    filter_crs: Annotated[CRS84 | None, Query(alias="filter-crs")] = None,
     service: StacApiService = Depends(get_item_service),
 ) -> Response:
     """Return collection items matching the supplied filters."""
+
     _validate_datetime(datetime)
     search_result: ItemCollection | None = None
 
@@ -267,6 +301,7 @@ def get_features(
             limit,
             bbox,
             datetime,
+            _get_filter(filter, filter_lang)
         )
     except Exception as e:
         raise _server_error(
@@ -334,6 +369,7 @@ def _item_search(
     limit: int | None,
     ids: list[str] | None,
     collections: list[str] | None,
+    filter: str | dict | None,
     *,
     service: StacApiService,
 ) -> Response:
@@ -342,18 +378,69 @@ def _item_search(
     search_result: ItemCollection | None = None
 
     try:
-        search_result = service.get_item_search(bbox, intersects, datetime, limit, ids, collections)
+        search_result = service.get_item_search(
+            bbox, intersects, datetime, limit, ids, collections, filter
+        )
     except Exception as e:
         raise _server_error(
-            f"An error occurred when searching with criteria: bbox={bbox}, intersects={intersects}, datetime={datetime}, limit={limit}, ids={ids}, collections={collections}: {e}"
+            f"An error occurred when searching with criteria: bbox={bbox}, intersects={intersects}, datetime={datetime}, limit={limit}, ids={ids}, collections={collections}, filter={filter}: {e}"
         ) from e
 
     if search_result is not None:
         return JSONResponse(content=search_result.to_dict())
 
     raise _not_found(
-        f"Searching with criteria: bbox={bbox}, intersects={intersects}, datetime={datetime}, limit={limit}, ids={ids}, collections={collections} did not produce any result"
+        f"Searching with criteria: bbox={bbox}, intersects={intersects}, datetime={datetime}, limit={limit}, ids={ids}, collections={collections}, filter={filter} did not produce any result"
     )
+
+
+@app.get(
+    '/queryables',
+    responses={'default': {'model': Exception}},
+    tags=['Filter Extension'],
+)
+def get_queryables() -> Response:
+    """
+    Get the JSON Schema defining the list of variable terms that can be used in CQL2 expressions.
+    """
+    return JSONResponse(content={
+        "$schema": "https://json-schema.org/draft-07/schema",
+        "$id": "https://stac.opensearch.dataspace.copernicus.eu/v1/queryables",
+        "type": "object",
+        "title": "Queryables for STAC API",
+        "description": "Queryable names for the STAC API Item Search filter.",
+        "properties": {
+            "id": {
+                "description": "ID",
+                "$ref": "https://schemas.stacspec.org/v1.0.0/item-spec/json-schema/item.json#/definitions/core/allOf/2/properties/id"
+            },
+            "collection": {
+                "description": "Collection",
+                "$ref": "https://schemas.stacspec.org/v1.0.0/item-spec/json-schema/item.json#/definitions/core/allOf/2/then/properties/collection"
+            },
+            "geometry": {
+                "description": "Geometry",
+                "$ref": "https://schemas.stacspec.org/v1.0.0/item-spec/json-schema/item.json#/definitions/core/allOf/1/oneOf/0/properties/geometry"
+            },
+            "datetime": {
+                "description": "Acquisition Timestamp",
+                "$ref": "https://schemas.stacspec.org/v1.0.0/item-spec/json-schema/datetime.json#/properties/datetime"
+            },
+            "created": {
+                "description": "Creation Timestamp",
+                "$ref": "https://schemas.stacspec.org/v1.0.0/item-spec/json-schema/datetime.json#/properties/created"
+            },
+            "updated": {
+                "description": "Last Update Time",
+                "$ref": "https://schemas.stacspec.org/v1.0.0/item-spec/json-schema/datetime.json#/properties/updated"
+            },
+            "filter": {
+                "description": "A CQL2 filter expression for filtering items.",
+                "$ref": "https://raw.githubusercontent.com/stac-api-extensions/filter/refs/heads/main/openapi.yaml#/components/parameters/filter"
+            }
+        },
+        "additionalProperties": True
+    })
 
 
 def _parse_intersects(value: str | None) -> GeometryGeoJSON | GeometryCollection | None:
@@ -395,6 +482,9 @@ def get_item_search(
     limit: Annotated[int | None, Query(ge=1, le=10000)] = 10,
     ids: list[str] | None = Query(None),
     collections: list[str] | None = Query(None),
+    filter: Annotated[str | None, Query()] = None,
+    filter_lang: Annotated[FilterLang, Query(alias="filter-lang")] = FilterLang.CQL2_TEXT,
+    filter_crs: Annotated[CRS84 | None, Query(alias="filter-crs")] = None,
     *,
     service: StacApiService = Depends(get_item_service),
 ) -> Response:
@@ -406,6 +496,7 @@ def get_item_search(
         limit,
         ids,
         collections,
+        _get_filter(filter, filter_lang),
         service=service,
     )
 
@@ -429,5 +520,6 @@ def post_item_search(
         body.limit,
         body.ids,
         body.collections,
+        _get_filter(body.filter, body.filter_lang),
         service=service,
     )
