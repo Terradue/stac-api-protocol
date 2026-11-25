@@ -94,7 +94,7 @@ class StacApiService(ABC):
 
     @final
     def get_conformance_declaration(self) -> ConformanceClasses:
-        """Return a fresh declaration of the four supported STAC API classes.
+        """Return a fresh declaration of the advertised STAC and OGC classes.
 
         Adopter implementations must fulfill these advertised capabilities.
         """
@@ -103,20 +103,17 @@ class StacApiService(ABC):
                 "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
                 "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
                 "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
-
                 "http://www.opengis.net/spec/ogcapi_common-2/1.0/conf/collections",
-
                 "http://api.stacspec.org/v1.0.0/core",
                 "http://api.stacspec.org/v1.0.0/item-search",
-
-                "https://api.stacspec.org/v1.0.0/item-search#filter"
+                "https://api.stacspec.org/v1.0.0/item-search#filter",
                 "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/filter",
                 "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/features-filter",
                 "http://www.opengis.net/spec/cql2/1.0/conf/cql2-text",
                 "http://www.opengis.net/spec/cql2/1.0/conf/cql2-json",
                 "http://www.opengis.net/spec/cql2/1.0/conf/basic-cql2",
                 "http://www.opengis.net/spec/cql2/1.0/conf/basic-spatial-functions",
-                "http://www.opengis.net/spec/cql2/1.0/conf/advanced-comparison-operators"
+                "http://www.opengis.net/spec/cql2/1.0/conf/advanced-comparison-operators",
             ]
         )
 
