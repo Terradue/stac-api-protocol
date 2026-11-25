@@ -41,6 +41,7 @@ uv.lock
 
 schemas/collections.yaml
 schemas/core.yaml
+schemas/filter.yaml
 schemas/item-search.yaml
 schemas/ogcapi-features.yaml
 schemas/openapi.referenced.yaml
