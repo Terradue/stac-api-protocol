@@ -43,7 +43,7 @@ classifiers = [
 dependencies = [
   "cql2json-pydantic>=0.2.0",
   "geojson==3.3.0",
-  "pystac>=1.14,<2",
+  "pystac>=1.16.1,<2",
   "fastapi>=0.162.4",
 ]
 
