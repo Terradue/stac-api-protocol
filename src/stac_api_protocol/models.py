@@ -226,4 +226,6 @@ class SearchBody(
 
     filter: Annotated[str | Cql2Expression | None, Field(None)]
     filter_lang: Annotated[FilterLang, Field(FilterLang.CQL2_JSON, alias="filter-lang")]
-    filter_crs: Annotated[CRS84 | None, Field(CRS84, alias="filter-crs")]
+    filter_crs: Annotated[
+        CRS84 | None, Field("http://www.opengis.net/def/crs/OGC/1.3/CRS84", alias="filter-crs")
+    ]

@@ -168,6 +168,7 @@ def test_post_model_defaults_to_cql2_json_and_crs84(filter_lang: str | None) -> 
     assert body.filter_lang == FilterLang.CQL2_JSON
     assert body.filter_crs == CRS84_URI
     assert body.model_dump(mode="json", by_alias=True)["filter"] == fields["filter"]
+    assert body.model_dump(mode="json", by_alias=True)["filter-crs"] == CRS84_URI
 
 
 @pytest.mark.parametrize(
