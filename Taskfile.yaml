@@ -27,25 +27,36 @@ vars:
     - item-search
     - collections
     - ogcapi-features
+  STAC_FILTER_VERSION: v1.0.0-rc.4
 
 tasks:
-  fetch:
+  fetch_v10_spec:
     internal: true
     status:
-      - '! [ -f ./schemas/{{.SPEC}}.yaml ]'
+      - '[ -f ./schemas/{{.SPEC}}.yaml ]'
     cmds:
       - >-
         curl --fail --location --show-error
         "{{.STAC_BASE_URL}}/{{.SPEC}}/openapi.yaml"
         --output "./schemas/{{.SPEC}}.yaml"
 
+  fetch_filter_spec:
+    internal: true
+    status:
+      - '[ -f ./schemas/filter.yaml ]'
+    cmds:
+      - >-
+        curl --fail --location --show-error
+        "https://raw.githubusercontent.com/stac-api-extensions/filter/refs/tags/{{.STAC_FILTER_VERSION}}/openapi.yaml"
+        --output "./schemas/filter.yaml"
+        
   fetch_all:
     internal: true
     cmds:
       - mkdir -p ./schemas
       - for:
           var: STAC_SPECS
-        task: fetch
+        task: fetch_v10_spec
         vars:
           SPEC: '{{.ITEM}}'
 
@@ -61,7 +72,7 @@ tasks:
           .components.parameters.limit = {
             "$ref": "./ogcapi-features.yaml#/components/parameters/limit"
           }
-        ' ./schemas/item-search.yaml
+        ' ./schemas/filter.yaml
       - |
         cat > ./schemas/openapi.referenced.yaml <<'YAML'
         openapi: 3.1.0
@@ -104,7 +115,10 @@ tasks:
             $ref: './ogcapi-features.yaml#/paths/~1collections~1{collectionId}~1items~1{featureId}'
 
           /search:
-            $ref: './item-search.yaml#/paths/~1search'
+            $ref: './filter.yaml#/paths/~1search'
+
+          /queryables:
+            $ref: './filter.yaml#/paths/~1queryables'
 
         components:
           securitySchemes:
@@ -126,19 +140,21 @@ tasks:
           API: './schemas/openapi.yaml'
           OUTPUT: './docs/reference/openapi.html'
 
+  bootstrap_filter:
+    deps:
+      - fetch_filter_spec
+    cmds:
+      - task: openapi:bundle
+        vars:
+          API: './schemas/filter.yaml'
+          OUTPUT: './schemas/openapi.yaml'
+
   generate_fastapi_skeleton:
     cmds:
       - task: openapi:generate_fastapi
         vars:
           API: './schemas/openapi.yaml'
           OUTPUT: './src/stac_api_protocol'
-      - rm -rf src/stac_api_protocol/models.py
-      - task: json:create_models # the datamodel-codegen is not sully configured in the datamodel-code-generator
-        vars:
-          INPUT_FILE_TYPE: 'openapi'
-          SCHEMA: './schemas/openapi.yaml'
-          OUTPUT: 'src/stac_api_protocol/models.py'
-      - hatch run dev:fix
 
   default:
     cmds:
