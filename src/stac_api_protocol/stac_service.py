@@ -34,6 +34,10 @@ if TYPE_CHECKING:
 class StacApiService(ABC):
     """Provide shared metadata and require adopter-defined catalogue operations.
 
+    The HTTP adapter passes the request base URL as the first argument to
+    catalogue operations. It includes any deployment prefix without a trailing
+    slash. Providers can use it to construct absolute navigation links.
+
     Attributes:
         id: Stable catalogue identifier.
         title: Human-readable catalogue title.
@@ -47,12 +51,12 @@ class StacApiService(ABC):
         self.description = description
 
     @final
-    def get_landing_page(self) -> LandingPage:
+    def get_landing_page(self, base_url: str) -> LandingPage:
         """Build metadata and links for the requested catalogue root.
 
         Args:
-            request: Landing-page request whose URL supplies the public catalogue
-                root, including any deployment prefix. Query strings are excluded.
+            base_url: Absolute catalogue root URL, including any deployment prefix
+                without query strings or a trailing slash.
         """
         landing_page = LandingPage(
             id=self.id,
@@ -60,14 +64,14 @@ class StacApiService(ABC):
             description=self.description,
         )
 
-        landing_page.add_link(Link("self", "/"))
-        landing_page.add_link(Link("data", "/collections"))
-        landing_page.add_link(Link("conformance", "/conformance"))
-        landing_page.add_link(Link("search", "/search"))
+        landing_page.add_link(Link("self", f"{base_url}/"))
+        landing_page.add_link(Link("data", f"{base_url}/collections"))
+        landing_page.add_link(Link("conformance", f"{base_url}/conformance"))
+        landing_page.add_link(Link("search", f"{base_url}/search"))
         landing_page.add_link(
             Link(
                 "http://www.opengis.net/def/rel/ogc/1.0/queryables",
-                "/queryables",
+                f"{base_url}/queryables",
                 media_type="application/schema+json",
             )
         )
@@ -76,27 +80,56 @@ class StacApiService(ABC):
         return landing_page
 
     @abstractmethod
-    def get_collections(self) -> Collections:
-        """Return the catalogue's collection listing and navigation links."""
+    def get_collections(self, base_url: str) -> Collections:
+        """Return the catalogue's collection listing and navigation links.
+
+        Args:
+            base_url: Absolute catalogue root URL supplied by the request, including
+                any deployment prefix but no trailing slash. Use it for navigation links.
+        """
 
     @abstractmethod
-    def describe_collection(self, collection_id: str) -> Collection | None:
-        """Return collection metadata, or None if the collection does not exist."""
+    def describe_collection(self, base_url: str, collection_id: str) -> Collection | None:
+        """Return collection metadata, or None if the collection does not exist.
+
+        Args:
+            base_url: Absolute catalogue root URL supplied by the request, including
+                any deployment prefix but no trailing slash. Use it for navigation links.
+            collection_id: Identifier of the requested collection.
+        """
 
     @abstractmethod
     def get_features(
         self,
+        base_url: str,
         collection_id: str,
         limit: int | None,
         bbox: list[float] | None,
         datetime: str | None,
         filter: str | dict[str, object] | bool | None,
     ) -> ItemCollection | None:
-        """Return matching items, an empty result, or None for an unavailable resource."""
+        """Return matching items, an empty result, or None for an unavailable resource.
+
+        Args:
+            base_url: Absolute catalogue root URL supplied by the request, including
+                any deployment prefix but no trailing slash. Use it for navigation links.
+            collection_id: Identifier of the collection to search.
+            limit: Maximum number of items, or None for the provider default.
+            bbox: Spatial bounds, or None to omit spatial filtering.
+            datetime: Instant or interval expression, or None to omit time filtering.
+            filter: CQL2 expression, or None to omit CQL2 filtering.
+        """
 
     @abstractmethod
-    def get_feature(self, collection_id: str, feature_id: str) -> Item | None:
-        """Return an item, or None if it does not exist in the collection."""
+    def get_feature(self, base_url: str, collection_id: str, feature_id: str) -> Item | None:
+        """Return an item, or None if it does not exist in the collection.
+
+        Args:
+            base_url: Absolute catalogue root URL supplied by the request, including
+                any deployment prefix but no trailing slash. Use it for navigation links.
+            collection_id: Identifier of the containing collection.
+            feature_id: Identifier of the requested item.
+        """
 
     @final
     def get_conformance_declaration(self) -> ConformanceClasses:
@@ -128,6 +161,7 @@ class StacApiService(ABC):
     @abstractmethod
     def get_item_search(
         self,
+        base_url: str,
         bbox: list[float] | None,
         intersects: GeometryGeoJSON | GeometryCollection | None,
         datetime: str | None,
@@ -136,4 +170,16 @@ class StacApiService(ABC):
         collections: list[str] | None,
         filter: str | dict[str, object] | bool | None,
     ) -> ItemCollection | None:
-        """Return matching items, an empty result, or None for an unavailable resource."""
+        """Return matching items, an empty result, or None for an unavailable resource.
+
+        Args:
+            base_url: Absolute catalogue root URL supplied by the request, including
+                any deployment prefix but no trailing slash. Use it for navigation links.
+            bbox: Spatial bounds, or None to omit bounding-box filtering.
+            intersects: Geometry to intersect, or None to omit intersection filtering.
+            datetime: Instant or interval expression, or None to omit time filtering.
+            limit: Maximum number of items, or None for the provider default.
+            ids: Item identifiers, or None to search all items.
+            collections: Collection identifiers, or None to search all collections.
+            filter: CQL2 expression, or None to omit CQL2 filtering.
+        """

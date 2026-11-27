@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** `StacApiService.get_landing_page`, `get_collections`, `describe_collection`, `get_features`, `get_feature`, and `get_item_search` now require `base_url: str` as the first argument after `self`. Providers must update their method signatures and forward this argument in internal calls; direct callers must supply it. The HTTP adapter passes the request base URL, including any deployment prefix and with trailing slashes removed. Direct callers must also omit trailing slashes. Landing-page links are absolute again.
+
 ## [0.2.0] - 2026-11-25
 
 ### Changed

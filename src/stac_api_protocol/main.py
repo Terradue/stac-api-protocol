@@ -68,6 +68,10 @@ app = FastAPI(
 )
 
 
+def _get_url(request: Request) -> str:
+    return str(request.base_url).rstrip("/")
+
+
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(_request: Request, error: StarletteHTTPException) -> JSONResponse:
     """Return application and framework HTTP errors using the STAC error schema."""
@@ -173,10 +177,12 @@ def _validate_datetime(datetime_value: str | None) -> None:
     responses={"4XX": {"model": StacException}, "5XX": {"model": StacException}},
     tags=["Core"],
 )
-def get_landing_page(service: StacApiService = Depends(get_item_service)) -> Response:
+def get_landing_page(
+    request: Request, service: StacApiService = Depends(get_item_service)
+) -> Response:
     """Return the configured service catalogue landing page."""
     try:
-        landing_page: LandingPage = service.get_landing_page()
+        landing_page: LandingPage = service.get_landing_page(_get_url(request))
     except Exception as e:
         raise _server_error(f"An error occurred when looking for the Landing Page: {e}") from e
 
@@ -207,10 +213,12 @@ def _collection_with_queryables(collection: Collection) -> Collection:
     responses={"4XX": {"model": StacException}, "5XX": {"model": StacException}},
     tags=["Collections"],
 )
-def get_collections(service: StacApiService = Depends(get_item_service)) -> Collections:
+def get_collections(
+    request: Request, service: StacApiService = Depends(get_item_service)
+) -> Collections:
     """List collections from the configured service."""
     try:
-        result = service.get_collections()
+        result = service.get_collections(_get_url(request))
         return result.model_copy(
             update={
                 "collections": [_collection_with_queryables(entry) for entry in result.collections]
@@ -228,6 +236,7 @@ def get_collections(service: StacApiService = Depends(get_item_service)) -> Coll
     tags=["Collections"],
 )
 def describe_collection(
+    request: Request,
     collection_id: str = Path(..., alias="collectionId"),
     service: StacApiService = Depends(get_item_service),
 ) -> Response:
@@ -235,7 +244,7 @@ def describe_collection(
     collection: Collection | None = None
 
     try:
-        collection = service.describe_collection(collection_id)
+        collection = service.describe_collection(_get_url(request), collection_id)
     except Exception as e:
         raise _server_error(
             f"An error occurred when looking for Collection {collection_id}: {e}"
@@ -306,6 +315,7 @@ def _get_filter(
     tags=["Features"],
 )
 def get_features(
+    request: Request,
     collection_id: str = Path(..., alias="collectionId"),
     limit: Annotated[int | None, Query(ge=1, le=10000)] = 10,
     bbox: Annotated[
@@ -327,7 +337,9 @@ def get_features(
     search_result: ItemCollection | None = None
 
     try:
-        search_result = service.get_features(collection_id, limit, bbox, datetime, expression)
+        search_result = service.get_features(
+            _get_url(request), collection_id, limit, bbox, datetime, expression
+        )
     except Exception as e:
         raise _server_error(
             f"An error occurred when getting Features from Collection {collection_id} with criteria: limit={limit}, bbox={bbox}, datetime={datetime}: {e}"
@@ -347,6 +359,7 @@ def get_features(
     tags=["Features"],
 )
 def get_feature(
+    request: Request,
     collection_id: str = Path(..., alias="collectionId"),
     feature_id: str = Path(..., alias="featureId"),
     service: StacApiService = Depends(get_item_service),
@@ -355,7 +368,7 @@ def get_feature(
     feature: Item | None = None
 
     try:
-        feature = service.get_feature(collection_id, feature_id)
+        feature = service.get_feature(_get_url(request), collection_id, feature_id)
     except Exception as e:
         raise _server_error(
             f"An error occurred when looking for Item {feature_id} from Collection {collection_id}: {e}"
@@ -388,6 +401,7 @@ def get_conformance_declaration(
 
 
 def _item_search(
+    request: Request,
     bbox: list[float] | None,
     intersects: GeometryGeoJSON | GeometryCollection | None,
     datetime: str | None,
@@ -404,7 +418,7 @@ def _item_search(
 
     try:
         search_result = service.get_item_search(
-            bbox, intersects, datetime, limit, ids, collections, filter
+            _get_url(request), bbox, intersects, datetime, limit, ids, collections, filter
         )
     except Exception as e:
         raise _server_error(
@@ -456,7 +470,7 @@ def get_collection_queryables(
             status 500 if the provider cannot retrieve collection metadata.
     """
     try:
-        collection = service.describe_collection(collection_id)
+        collection = service.describe_collection(_get_url(request), collection_id)
     except Exception as error:
         raise _server_error("Unable to retrieve collection metadata") from error
     if collection is None:
@@ -492,6 +506,7 @@ def _parse_intersects(value: str | None) -> GeometryGeoJSON | GeometryCollection
     tags=["Item Search"],
 )
 def get_item_search(
+    request: Request,
     bbox: Annotated[
         list[float] | None,
         BeforeValidator(_split_bbox_coordinates),
@@ -511,6 +526,7 @@ def get_item_search(
 ) -> Response:
     """Search STAC items using query parameters."""
     return _item_search(
+        request,
         bbox,
         _parse_intersects(intersects),
         datetime,
@@ -528,13 +544,16 @@ def get_item_search(
     tags=["Item Search"],
 )
 def post_item_search(
-    body: SearchBody | None = None, service: StacApiService = Depends(get_item_service)
+    request: Request,
+    body: SearchBody | None = None,
+    service: StacApiService = Depends(get_item_service),
 ) -> Response:
     """Search STAC items using a validated JSON request body."""
     if not body:
         raise _not_found("No search criteria specified")
 
     return _item_search(
+        request,
         body.bbox,
         _parse_intersects(body.intersects) if body.intersects is not None else None,
         body.datetime,

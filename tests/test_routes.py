@@ -43,19 +43,21 @@ if TYPE_CHECKING:
     ],
 )
 def test_routes_serialize_service_results(
-    api: ModuleType, service: Mock, route: str, arguments: tuple[object, ...]
+    api: ModuleType, service: Mock, http_request: Request, route: str, arguments: tuple[object, ...]
 ) -> None:
     backend = getattr(service, route)
     payload = {"id": "result", "links": []}
     backend.return_value.to_dict.return_value = payload
-    response = getattr(api, route)(*arguments, service=service)
+    response = getattr(api, route)(http_request, *arguments, service=service)
     assert response.status_code == HTTPStatus.OK
     assert json.loads(response.body) == payload
-    backend.assert_called_once_with(*arguments)
+    backend.assert_called_once_with("https://example.com/stac", *arguments)
 
 
 @pytest.mark.parametrize("route", ["get_conformance_declaration"])
-def test_routes_return_service_models(api: ModuleType, service: Mock, route: str) -> None:
+def test_routes_return_service_models(
+    api: ModuleType, service: Mock, http_request: Request, route: str
+) -> None:
     backend = getattr(service, route)
     assert getattr(api, route)(service=service) is backend.return_value
     backend.assert_called_once_with()
@@ -72,11 +74,11 @@ def test_routes_return_service_models(api: ModuleType, service: Mock, route: str
     ],
 )
 def test_missing_results_raise_not_found(
-    api: ModuleType, service: Mock, route: str, arguments: tuple[object, ...]
+    api: ModuleType, service: Mock, http_request: Request, route: str, arguments: tuple[object, ...]
 ) -> None:
     getattr(service, route).return_value = None
     with pytest.raises(HTTPException) as raised:
-        getattr(api, route)(*arguments, service=service)
+        getattr(api, route)(http_request, *arguments, service=service)
     assert raised.value.status_code == HTTPStatus.NOT_FOUND
     assert raised.value.detail
 
@@ -94,31 +96,38 @@ def test_missing_results_raise_not_found(
     ],
 )
 def test_backend_errors_become_server_errors(
-    api: ModuleType, service: Mock, route: str, arguments: tuple[object, ...]
+    api: ModuleType, service: Mock, http_request: Request, route: str, arguments: tuple[object, ...]
 ) -> None:
     error = RuntimeError("backend unavailable")
     getattr(service, route).side_effect = error
     with pytest.raises(HTTPException) as raised:
-        getattr(api, route)(*arguments, service=service)
+        if route == "get_conformance_declaration":
+            getattr(api, route)(service=service)
+        else:
+            getattr(api, route)(http_request, *arguments, service=service)
     assert raised.value.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     assert raised.value.__cause__ is error
     assert "backend unavailable" in raised.value.detail
 
 
 @pytest.mark.parametrize("route", ["get_features", "get_item_search"])
-def test_empty_item_collection_is_success(api: ModuleType, service: Mock, route: str) -> None:
+def test_empty_item_collection_is_success(
+    api: ModuleType, service: Mock, http_request: Request, route: str
+) -> None:
     getattr(service, route).return_value = ItemCollection([])
     arguments = (
         ("sentinel", 10, None, None)
         if route == "get_features"
         else (None, None, None, 10, None, None)
     )
-    response = getattr(api, route)(*arguments, service=service)
+    response = getattr(api, route)(http_request, *arguments, service=service)
     assert response.status_code == HTTPStatus.OK
     assert json.loads(response.body) == {"type": "FeatureCollection", "features": []}
 
 
-def test_post_search_forwards_all_filters(api: ModuleType, service: Mock) -> None:
+def test_post_search_forwards_all_filters(
+    api: ModuleType, service: Mock, http_request: Request
+) -> None:
     geometry = '{"type":"Point","coordinates":[12,41]}'
     body = SearchBody(
         bbox=[1, 2, 3, 4],
@@ -129,8 +138,9 @@ def test_post_search_forwards_all_filters(api: ModuleType, service: Mock) -> Non
         collections=["sentinel"],
     )
     service.get_item_search.return_value = ItemCollection([])
-    response = api.post_item_search(body, service=service)
+    response = api.post_item_search(http_request, body, service=service)
     service.get_item_search.assert_called_once_with(
+        "https://example.com/stac",
         body.bbox,
         {"type": "Point", "coordinates": [12, 41]},
         body.datetime,
@@ -142,15 +152,17 @@ def test_post_search_forwards_all_filters(api: ModuleType, service: Mock) -> Non
     assert response.status_code == HTTPStatus.OK
 
 
-def test_post_search_defaults(api: ModuleType, service: Mock) -> None:
+def test_post_search_defaults(api: ModuleType, service: Mock, http_request: Request) -> None:
     service.get_item_search.return_value = ItemCollection([])
-    api.post_item_search(SearchBody(), service=service)
-    service.get_item_search.assert_called_once_with(None, None, None, 10, None, None, None)
+    api.post_item_search(http_request, SearchBody(), service=service)
+    service.get_item_search.assert_called_once_with(
+        "https://example.com/stac", None, None, None, 10, None, None, None
+    )
 
 
-def test_post_search_requires_body(api: ModuleType, service: Mock) -> None:
+def test_post_search_requires_body(api: ModuleType, service: Mock, http_request: Request) -> None:
     with pytest.raises(HTTPException) as raised:
-        api.post_item_search(service=service)
+        api.post_item_search(http_request, service=service)
     assert raised.value.status_code == HTTPStatus.NOT_FOUND
     service.get_item_search.assert_not_called()
 

@@ -47,6 +47,9 @@ individual items return 404. Searches support IDs, collections, bbox, intersects
 and inclusive datetime instants/intervals (including open bounds). Results are
 sorted by collection and ID, default to 10 items, and have no pagination.
 Six-coordinate boxes use XY only because NAIP footprints have no elevation.
+The service methods accept the request-derived `base_url`, without a trailing slash, as their first argument
+and forward it when delegating to item search. Collection-list navigation links
+use this URL, including any deployment prefix, as do the inherited landing-page links.
 The original asset and item links are preserved and may point to Planetary Computer.
 
 GET `bbox` accepts comma-separated coordinates or repeated query parameters.

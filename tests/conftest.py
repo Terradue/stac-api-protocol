@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest
+from fastapi import Request
 
 from stac_api_protocol.stac_service import StacApiService
 
@@ -43,3 +44,18 @@ def api() -> Iterator[ModuleType]:
         module = importlib.import_module("stac_api_protocol.main")
     yield module
     sys.modules.pop("stac_api_protocol.main", None)
+
+
+@pytest.fixture
+def http_request() -> Request:
+    """Provide a request with a deployment prefix for route forwarding tests."""
+    return Request(
+        {
+            "type": "http",
+            "scheme": "https",
+            "server": ("example.com", 443),
+            "path": "/stac/search",
+            "root_path": "/stac",
+            "headers": [],
+        }
+    )

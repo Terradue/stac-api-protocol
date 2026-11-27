@@ -145,20 +145,24 @@ class GeoParquetService(StacApiService):
             )
         }
 
-    def get_collections(self) -> Collections:
+    def get_collections(self, base_url: str) -> Collections:
         """Return all static collection descriptions, including metadata-only datasets."""
         return Collections(
             collections=[collection.clone() for collection in self._collections.values()],
-            links=[Link("self", "/collections"), Link("root", "/")],
+            links=[
+                Link("self", f"{base_url}/collections"),
+                Link("root", f"{base_url}/"),
+            ],
         )
 
-    def describe_collection(self, collection_id: str) -> Collection | None:
+    def describe_collection(self, base_url: str, collection_id: str) -> Collection | None:
         """Return an independent collection description, or None for an unknown ID."""
         collection = self._collections.get(collection_id)
         return collection.clone() if collection is not None else None
 
     def get_features(
         self,
+        base_url: str,
         collection_id: str,
         limit: int | None,
         bbox: list[float] | None,
@@ -172,15 +176,18 @@ class GeoParquetService(StacApiService):
         """
         if collection_id not in self._collections:
             return None
-        return self.get_item_search(bbox, None, datetime, limit, None, [collection_id], filter)
+        return self.get_item_search(
+            base_url, bbox, None, datetime, limit, None, [collection_id], filter
+        )
 
-    def get_feature(self, collection_id: str, feature_id: str) -> Item | None:
+    def get_feature(self, base_url: str, collection_id: str, feature_id: str) -> Item | None:
         """Look up an item by both collection and item ID, returning None if absent."""
-        result = self.get_item_search(None, None, None, 1, [feature_id], [collection_id])
+        result = self.get_item_search(base_url, None, None, None, 1, [feature_id], [collection_id])
         return next(iter(result), None)
 
     def get_item_search(
         self,
+        base_url: str,
         bbox: list[float] | None,
         intersects: GeometryGeoJSON | GeometryCollection | None,
         datetime: str | None,

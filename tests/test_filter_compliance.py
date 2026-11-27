@@ -137,7 +137,7 @@ def test_landing_page_advertises_queryables_with_standard_relation(service: Mock
     service.get_conformance_declaration.return_value = StacApiService.get_conformance_declaration(
         service
     )
-    page = StacApiService.get_landing_page(service)
+    page = StacApiService.get_landing_page(service, "http://localhost:8000")
     assert page.to_dict()["conformsTo"] == service.get_conformance_declaration().conforms_to
     links = [link for link in page.links if link.rel == QUERYABLES_REL]
     assert links, "Landing page must advertise the OGC queryables relation"
@@ -199,10 +199,12 @@ def test_get_defaults_to_text_and_decodes_escaped_expression(
     assert json.loads(body) == {"type": "FeatureCollection", "features": []}
     if path == "/search":
         service.get_item_search.assert_called_once_with(
-            None, None, None, 10, None, None, expression
+            "http://localhost:8000", None, None, None, 10, None, None, expression
         )
     else:
-        service.get_features.assert_called_once_with("sentinel", 10, None, None, expression)
+        service.get_features.assert_called_once_with(
+            "http://localhost:8000", "sentinel", 10, None, None, expression
+        )
 
 
 @pytest.mark.parametrize("method", ["GET", "POST"])
@@ -242,7 +244,9 @@ def test_cql2_json_basic_predicates_reach_service(
     }
     status, _, _ = asyncio.run(_request(filter_app, method, "/search", fields))
     assert status == HTTPStatus.OK
-    service.get_item_search.assert_called_once_with(None, None, None, 10, None, None, expression)
+    service.get_item_search.assert_called_once_with(
+        "http://localhost:8000", None, None, None, 10, None, None, expression
+    )
 
 
 @pytest.mark.parametrize("method", ["GET", "POST"])
@@ -263,7 +267,14 @@ def test_filter_is_combined_with_standard_search_constraints(
     status, _, _ = asyncio.run(_request(filter_app, method, "/search", fields))
     assert status == HTTPStatus.OK
     service.get_item_search.assert_called_once_with(
-        [1, 2, 3, 4], None, fields["datetime"], 2, ["scene"], ["sentinel"], expression
+        "http://localhost:8000",
+        [1, 2, 3, 4],
+        None,
+        fields["datetime"],
+        2,
+        ["scene"],
+        ["sentinel"],
+        expression,
     )
 
 
@@ -289,7 +300,9 @@ def test_search_without_filter_remains_available(
 ) -> None:
     status, _, _ = asyncio.run(_request(filter_app, method, "/search", {}))
     assert status == HTTPStatus.OK
-    service.get_item_search.assert_called_once_with(None, None, None, 10, None, None, None)
+    service.get_item_search.assert_called_once_with(
+        "http://localhost:8000", None, None, None, 10, None, None, None
+    )
 
 
 @pytest.mark.parametrize("operator", ["=", "<>", "<", "<=", ">", ">="])
@@ -321,7 +334,9 @@ def test_post_json_filter_uses_default_encoding(
         fields["filter-lang"] = filter_lang
     status, _, _ = asyncio.run(_request(filter_app, "POST", "/search", fields))
     assert status == HTTPStatus.OK
-    service.get_item_search.assert_called_once_with(None, None, None, 10, None, None, expression)
+    service.get_item_search.assert_called_once_with(
+        "http://localhost:8000", None, None, None, 10, None, None, expression
+    )
 
 
 @pytest.mark.parametrize("method", ["GET", "POST"])
@@ -349,7 +364,7 @@ def test_post_text_is_processed_or_explicitly_rejected(filter_app: FastAPI, serv
     else:
         assert status == HTTPStatus.OK
         service.get_item_search.assert_called_once_with(
-            None, None, None, 10, None, None, expression
+            "http://localhost:8000", None, None, None, 10, None, None, expression
         )
 
 
@@ -418,7 +433,7 @@ def test_unknown_collection_queryables_returns_not_found(
     )
     assert status == HTTPStatus.NOT_FOUND
     assert json.loads(body)["code"] == "404"
-    service.describe_collection.assert_called_once_with("unknown")
+    service.describe_collection.assert_called_once_with("http://localhost:8000", "unknown")
 
 
 def test_collection_queryables_provider_failure_returns_server_error(
@@ -454,7 +469,9 @@ def test_boolean_and_custom_function_expressions_reach_provider(
     }
     status, _, _ = asyncio.run(_request(filter_app, method, "/search", fields))
     assert status == HTTPStatus.OK
-    service.get_item_search.assert_called_once_with(None, None, None, 10, None, None, expression)
+    service.get_item_search.assert_called_once_with(
+        "http://localhost:8000", None, None, None, 10, None, None, expression
+    )
 
 
 @pytest.mark.parametrize("expression", ["", "{", '{"op":1,"args":[]}', '{"op":"="}'])

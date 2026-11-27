@@ -28,16 +28,17 @@ if TYPE_CHECKING:
 class EmptyCatalogueService(StacApiService):
     """Exercise inherited metadata using a concrete empty catalogue."""
 
-    def get_collections(self) -> Collections:
+    def get_collections(self, base_url: str) -> Collections:
         """Return an empty collection listing."""
         return Collections(collections=[], links=[])
 
-    def describe_collection(self, collection_id: str) -> Collection | None:
+    def describe_collection(self, base_url: str, collection_id: str) -> Collection | None:
         """Report that no collection exists."""
         return None
 
     def get_features(
         self,
+        base_url: str,
         collection_id: str,
         limit: int | None,
         bbox: list[float] | None,
@@ -47,7 +48,7 @@ class EmptyCatalogueService(StacApiService):
         """Report that no collection exists."""
         return None
 
-    def get_feature(self, collection_id: str, feature_id: str) -> Item | None:
+    def get_feature(self, base_url: str, collection_id: str, feature_id: str) -> Item | None:
         """Report that no item exists."""
         return None
 
@@ -56,20 +57,20 @@ class EmptyCatalogueService(StacApiService):
         return ItemCollection([])
 
 
-def test_landing_page_uses_root_relative_links() -> None:
+def test_landing_page_uses_absolute_links() -> None:
     service = EmptyCatalogueService(id="catalogue", title="Example", description="Example data")
-    page = service.get_landing_page()
+    page = service.get_landing_page("https://example.com/stac")
 
     assert page.id == "catalogue"
     assert page.title == "Example"
     assert page.description == "Example data"
     assert {link.rel: link.get_href() for link in page.links} == {
-        "root": "/",
-        "self": "/",
-        "data": "/collections",
-        "conformance": "/conformance",
-        "search": "/search",
-        "http://www.opengis.net/def/rel/ogc/1.0/queryables": "/queryables",
+        "root": "https://example.com/stac/",
+        "self": "https://example.com/stac/",
+        "data": "https://example.com/stac/collections",
+        "conformance": "https://example.com/stac/conformance",
+        "search": "https://example.com/stac/search",
+        "http://www.opengis.net/def/rel/ogc/1.0/queryables": "https://example.com/stac/queryables",
     }
     assert page.to_dict()["conformsTo"] == service.get_conformance_declaration().conforms_to
 
@@ -101,9 +102,9 @@ def test_conformance_returns_fresh_fixed_declarations() -> None:
 
 def test_landing_page_returns_independent_metadata() -> None:
     service = EmptyCatalogueService("catalogue", "Example", "Example data")
-    page = service.get_landing_page()
-    original = service.get_landing_page().to_dict()
+    page = service.get_landing_page("https://example.com")
+    original = service.get_landing_page("https://example.com").to_dict()
     page.conforms_to.clear()
     page.links.clear()
     page.description = "Changed"
-    assert service.get_landing_page().to_dict() == original
+    assert service.get_landing_page("https://example.com").to_dict() == original

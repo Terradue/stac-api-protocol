@@ -19,7 +19,7 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import pytest
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from pystac import ItemCollection
 
 from stac_api_protocol.models import SearchBody
@@ -45,22 +45,26 @@ if TYPE_CHECKING:
     ],
 )
 def test_valid_datetimes_reach_service(
-    api: ModuleType, service: Mock, method: str, datetime_value: str | None
+    api: ModuleType, service: Mock, http_request: Request, method: str, datetime_value: str | None
 ) -> None:
     service.get_features.return_value = ItemCollection([])
     service.get_item_search.return_value = ItemCollection([])
     if method == "features":
-        api.get_features("sentinel", 10, None, datetime_value, service=service)
-        service.get_features.assert_called_once_with("sentinel", 10, None, datetime_value, None)
+        api.get_features(http_request, "sentinel", 10, None, datetime_value, service=service)
+        service.get_features.assert_called_once_with(
+            "https://example.com/stac", "sentinel", 10, None, datetime_value, None
+        )
     elif method == "get":
-        api.get_item_search(None, None, datetime_value, 10, None, None, service=service)
+        api.get_item_search(
+            http_request, None, None, datetime_value, 10, None, None, service=service
+        )
         service.get_item_search.assert_called_once_with(
-            None, None, datetime_value, 10, None, None, None
+            "https://example.com/stac", None, None, datetime_value, 10, None, None, None
         )
     else:
-        api.post_item_search(SearchBody(datetime=datetime_value), service=service)
+        api.post_item_search(http_request, SearchBody(datetime=datetime_value), service=service)
         service.get_item_search.assert_called_once_with(
-            None, None, datetime_value, 10, None, None, None
+            "https://example.com/stac", None, None, datetime_value, 10, None, None, None
         )
 
 
@@ -83,15 +87,17 @@ def test_valid_datetimes_reach_service(
     ],
 )
 def test_invalid_datetimes_are_rejected_before_service_call(
-    api: ModuleType, service: Mock, method: str, datetime_value: str
+    api: ModuleType, service: Mock, http_request: Request, method: str, datetime_value: str
 ) -> None:
     with pytest.raises(HTTPException) as raised:
         if method == "features":
-            api.get_features("sentinel", 10, None, datetime_value, service=service)
+            api.get_features(http_request, "sentinel", 10, None, datetime_value, service=service)
         elif method == "get":
-            api.get_item_search(None, None, datetime_value, 10, None, None, service=service)
+            api.get_item_search(
+                http_request, None, None, datetime_value, 10, None, None, service=service
+            )
         else:
-            api.post_item_search(SearchBody(datetime=datetime_value), service=service)
+            api.post_item_search(http_request, SearchBody(datetime=datetime_value), service=service)
     assert raised.value.status_code == HTTPStatus.BAD_REQUEST
     assert raised.value.detail.startswith("Invalid datetime:")
     service.get_features.assert_not_called()
@@ -112,13 +118,13 @@ def test_invalid_datetimes_are_rejected_before_service_call(
     ],
 )
 def test_invalid_geometries_are_rejected_before_service_call(
-    api: ModuleType, service: Mock, method: str, geometry: str
+    api: ModuleType, service: Mock, http_request: Request, method: str, geometry: str
 ) -> None:
     with pytest.raises(HTTPException) as raised:
         if method == "get":
-            api.get_item_search(None, geometry, None, 10, None, None, service=service)
+            api.get_item_search(http_request, None, geometry, None, 10, None, None, service=service)
         else:
-            api.post_item_search(SearchBody(intersects=geometry), service=service)
+            api.post_item_search(http_request, SearchBody(intersects=geometry), service=service)
     assert raised.value.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert raised.value.detail == "Invalid intersects geometry"
     service.get_item_search.assert_not_called()
@@ -132,9 +138,20 @@ def test_invalid_geometries_are_rejected_before_service_call(
         "null",
     ],
 )
-def test_get_search_parses_geometry(api: ModuleType, service: Mock, geometry: str) -> None:
+def test_get_search_parses_geometry(
+    api: ModuleType, service: Mock, http_request: Request, geometry: str
+) -> None:
     service.get_item_search.return_value = ItemCollection([])
-    api.get_item_search(None, geometry, None, 10, ["scene"], ["sentinel"], service=service)
+    api.get_item_search(
+        http_request, None, geometry, None, 10, ["scene"], ["sentinel"], service=service
+    )
     service.get_item_search.assert_called_once_with(
-        None, json.loads(geometry), None, 10, ["scene"], ["sentinel"], None
+        "https://example.com/stac",
+        None,
+        json.loads(geometry),
+        None,
+        10,
+        ["scene"],
+        ["sentinel"],
+        None,
     )
